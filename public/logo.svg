@@ -1,0 +1,10 @@
+<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64' width='128' height='128'>
+  <defs>
+    <linearGradient id='gradF' x1='0' x2='1'>
+      <stop offset='0' stop-color='#8B5CF6'/>
+      <stop offset='1' stop-color='#6B21A8'/>
+    </linearGradient>
+  </defs>
+  <rect x='8' y='8' width='44' height='48' rx='8' fill='url(#gradF)' transform='rotate(-12 26 32)'/>
+  <path d='M28 20h8v4h-6v6h5v4h-5v10h-6V20z' fill='#fff'/>
+</svg>
