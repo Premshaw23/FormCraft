@@ -1,5 +1,6 @@
-"use client"
-import React, { useState } from "react";
+"use client";
+import React, { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   Mail,
   Lock,
@@ -10,19 +11,47 @@ import {
   ArrowLeft,
   Check,
   X,
+  AlertCircle,
 } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import {
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signInWithPopup,
+  GoogleAuthProvider,
+  sendEmailVerification,
+  sendPasswordResetEmail,
+  updateProfile,
+} from "firebase/auth";
+import { auth } from "@/lib/firebase";
 
 export default function AuthPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const { user } = useAuth();
   const [isSignUp, setIsSignUp] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     password: "",
     confirmPassword: "",
+    rememberMe: false,
+    agreeToTerms: false,
   });
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user) {
+      const redirect = searchParams.get("redirect") || "/dashboard";
+      router.push(redirect);
+    }
+  }, [user, router, searchParams]);
 
   // Password strength checker
   const getPasswordStrength = (password) => {
@@ -43,28 +72,188 @@ export default function AuthPage() {
     "bg-green-500",
   ];
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-
-    // Simulate API call
-    setTimeout(() => {
-      setLoading(false);
-      console.log("Form submitted:", formData);
-      // Add your Firebase auth logic here
-    }, 2000);
+  const validateForm = () => {
+    if (isSignUp) {
+      if (!formData.name.trim()) {
+        setError("Please enter your full name");
+        return false;
+      }
+      if (formData.password.length < 8) {
+        setError("Password must be at least 8 characters long");
+        return false;
+      }
+      if (formData.password !== formData.confirmPassword) {
+        setError("Passwords do not match");
+        return false;
+      }
+      if (!formData.agreeToTerms) {
+        setError("Please accept the Terms of Service and Privacy Policy");
+        return false;
+      }
+    }
+    if (!formData.email.trim()) {
+      setError("Please enter your email");
+      return false;
+    }
+    if (!formData.password) {
+      setError("Please enter your password");
+      return false;
+    }
+    return true;
   };
 
-  const handleGoogleSignIn = () => {
-    console.log("Google Sign In clicked");
-    // Add your Google OAuth logic here
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+    setSuccess("");
+
+    if (!validateForm()) return;
+
+    setLoading(true);
+
+    try {
+      if (isSignUp) {
+        // Sign Up
+        const userCredential = await createUserWithEmailAndPassword(
+          auth,
+          formData.email,
+          formData.password
+        );
+
+        // Update profile with name
+        await updateProfile(userCredential.user, {
+          displayName: formData.name,
+        });
+
+        // Send verification email
+        await sendEmailVerification(userCredential.user);
+
+        setSuccess(
+          "Account created! Please check your email to verify your account."
+        );
+
+        // Redirect after 3 seconds
+        setTimeout(() => {
+          const redirect = searchParams.get("redirect") || "/dashboard";
+          router.push(redirect);
+        }, 3000);
+      } else {
+        // Sign In
+        await signInWithEmailAndPassword(
+          auth,
+          formData.email,
+          formData.password
+        );
+
+        const redirect = searchParams.get("redirect") || "/dashboard";
+        router.push(redirect);
+      }
+    } catch (err) {
+      console.error("Auth error:", err);
+      switch (err.code) {
+        case "auth/email-already-in-use":
+          setError("This email is already registered. Please sign in.");
+          break;
+        case "auth/invalid-email":
+          setError("Invalid email address.");
+          break;
+        case "auth/operation-not-allowed":
+          setError("Email/password accounts are not enabled.");
+          break;
+        case "auth/weak-password":
+          setError("Password is too weak. Please use a stronger password.");
+          break;
+        case "auth/user-disabled":
+          setError("This account has been disabled.");
+          break;
+        case "auth/user-not-found":
+          setError("No account found with this email.");
+          break;
+        case "auth/wrong-password":
+          setError("Incorrect password.");
+          break;
+        case "auth/invalid-credential":
+          setError("Invalid email or password.");
+          break;
+        case "auth/too-many-requests":
+          setError("Too many failed attempts. Please try again later.");
+          break;
+        default:
+          setError("An error occurred. Please try again.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setError("");
+    setLoading(true);
+
+    try {
+      const provider = new GoogleAuthProvider();
+      await signInWithPopup(auth, provider);
+
+      const redirect = searchParams.get("redirect") || "/dashboard";
+      router.push(redirect);
+    } catch (err) {
+      console.error("Google sign in error:", err);
+
+      if (err.code === "auth/popup-closed-by-user") {
+        setError("Sign in was cancelled.");
+      } else if (err.code === "auth/email-already-in-use") {
+        setError("This email is already linked with another account.");
+      } else if (err.code === "auth/cancelled-popup-request") {
+        // Ignore this error (multiple popups triggered)
+      } else {
+        setError("Failed to sign in with Google. Please try again.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+  const handleForgotPassword = async (e) => {
+    e.preventDefault();
+    setError("");
+    setSuccess("");
+
+    if (!formData.email.trim()) {
+      setError("Please enter your email address");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      await sendPasswordResetEmail(auth, formData.email);
+      setSuccess("Password reset email sent! Check your inbox.");
+      setShowForgotPassword(false);
+    } catch (err) {
+      console.error("Password reset error:", err);
+      switch (err.code) {
+        case "auth/user-not-found":
+          setError("No account found with this email.");
+          break;
+        case "auth/invalid-email":
+          setError("Invalid email address.");
+          break;
+        default:
+          setError("Failed to send reset email. Please try again.");
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleInputChange = (e) => {
+    const { name, value, type, checked } = e.target;
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value,
+      [name]: type === "checkbox" ? checked : value,
     });
+    setError(""); // Clear error when user types
   };
 
   const testimonials = [
@@ -89,12 +278,79 @@ export default function AuthPage() {
 
   const [activeTestimonial, setActiveTestimonial] = useState(0);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const interval = setInterval(() => {
       setActiveTestimonial((prev) => (prev + 1) % testimonials.length);
     }, 5000);
     return () => clearInterval(interval);
   }, []);
+
+  if (showForgotPassword) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-6">
+        <div className="w-full max-w-md">
+          <div className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 shadow-2xl p-8">
+            <button
+              onClick={() => setShowForgotPassword(false)}
+              className="flex items-center space-x-2 text-gray-400 hover:text-white transition-colors mb-6"
+            >
+              <ArrowLeft className="w-5 h-5" />
+              <span>Back to sign in</span>
+            </button>
+
+            <h2 className="text-3xl font-bold text-white mb-2">
+              Reset Password
+            </h2>
+            <p className="text-gray-400 mb-6">
+              Enter your email and we'll send you a reset link
+            </p>
+
+            {error && (
+              <div className="mb-4 p-3 bg-red-500/10 border border-red-500/50 rounded-lg flex items-start space-x-2">
+                <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+                <span className="text-sm text-red-200">{error}</span>
+              </div>
+            )}
+
+            {success && (
+              <div className="mb-4 p-3 bg-green-500/10 border border-green-500/50 rounded-lg flex items-start space-x-2">
+                <Check className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
+                <span className="text-sm text-green-200">{success}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleForgotPassword} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Email Address
+                </label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    placeholder="you@example.com"
+                    required
+                    className="w-full pl-11 pr-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full py-3 px-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold rounded-lg hover:shadow-lg hover:shadow-purple-500/50 hover:scale-[1.02] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+              >
+                {loading ? "Sending..." : "Send Reset Link"}
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex">
@@ -203,7 +459,11 @@ export default function AuthPage() {
             {/* Tab Switcher */}
             <div className="flex bg-white/5 rounded-lg p-1 mb-8">
               <button
-                onClick={() => setIsSignUp(false)}
+                onClick={() => {
+                  setIsSignUp(false);
+                  setError("");
+                  setSuccess("");
+                }}
                 className={`flex-1 py-2 px-4 rounded-md font-medium transition-all ${
                   !isSignUp
                     ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg"
@@ -213,7 +473,11 @@ export default function AuthPage() {
                 Sign In
               </button>
               <button
-                onClick={() => setIsSignUp(true)}
+                onClick={() => {
+                  setIsSignUp(true);
+                  setError("");
+                  setSuccess("");
+                }}
                 className={`flex-1 py-2 px-4 rounded-md font-medium transition-all ${
                   isSignUp
                     ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg"
@@ -233,10 +497,27 @@ export default function AuthPage() {
                 : "Sign in to continue to FormCraft"}
             </p>
 
+            {/* Error Message */}
+            {error && (
+              <div className="mb-4 p-3 bg-red-500/10 border border-red-500/50 rounded-lg flex items-start space-x-2">
+                <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+                <span className="text-sm text-red-200">{error}</span>
+              </div>
+            )}
+
+            {/* Success Message */}
+            {success && (
+              <div className="mb-4 p-3 bg-green-500/10 border border-green-500/50 rounded-lg flex items-start space-x-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                <Check className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
+                <span className="text-sm text-green-200">{success}</span>
+              </div>
+            )}
+
             {/* Google Sign In */}
             <button
               onClick={handleGoogleSignIn}
-              className="w-full flex items-center justify-center space-x-3 py-3 px-4 bg-white/10 border border-white/20 rounded-lg text-white font-medium hover:bg-white/20 transition-all mb-6"
+              disabled={loading}
+              className="w-full flex items-center justify-center space-x-3 py-3 px-4 bg-white/10 border border-white/20 rounded-lg text-white font-medium hover:bg-white/20 transition-all mb-6 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24">
                 <path
@@ -433,16 +714,20 @@ export default function AuthPage() {
                   <label className="flex items-center space-x-2 cursor-pointer">
                     <input
                       type="checkbox"
+                      name="rememberMe"
+                      checked={formData.rememberMe}
+                      onChange={handleInputChange}
                       className="w-4 h-4 rounded border-white/20 bg-white/10 text-purple-500 focus:ring-purple-500 focus:ring-offset-0"
                     />
                     <span className="text-sm text-gray-300">Remember me</span>
                   </label>
-                  <a
-                    href="#"
+                  <button
+                    type="button"
+                    onClick={() => setShowForgotPassword(true)}
                     className="text-sm text-purple-400 hover:text-purple-300 transition-colors"
                   >
                     Forgot password?
-                  </a>
+                  </button>
                 </div>
               )}
 
@@ -450,6 +735,9 @@ export default function AuthPage() {
                 <label className="flex items-start space-x-2 cursor-pointer">
                   <input
                     type="checkbox"
+                    name="agreeToTerms"
+                    checked={formData.agreeToTerms}
+                    onChange={handleInputChange}
                     required
                     className="w-4 h-4 mt-0.5 rounded border-white/20 bg-white/10 text-purple-500 focus:ring-purple-500 focus:ring-offset-0"
                   />
@@ -499,7 +787,7 @@ export default function AuthPage() {
                         d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                       ></path>
                     </svg>
-                    Processing...
+                    {isSignUp ? "Creating account..." : "Signing in..."}
                   </>
                 ) : isSignUp ? (
                   "Create Account"
@@ -509,12 +797,16 @@ export default function AuthPage() {
               </button>
             </form>
           </div>
- 
+
           {/* Footer Links */}
           <p className="text-center text-sm text-gray-400 mt-6">
             {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
             <button
-              onClick={() => setIsSignUp(!isSignUp)}
+              onClick={() => {
+                setIsSignUp(!isSignUp);
+                setError("");
+                setSuccess("");
+              }}
               className="text-purple-400 hover:text-purple-300 font-medium transition-colors"
             >
               {isSignUp ? "Sign in" : "Sign up"}

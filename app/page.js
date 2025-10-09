@@ -1,4 +1,4 @@
-"use client"
+"use client";
 import React, { useState, useEffect } from "react";
 import {
   Zap,
@@ -14,10 +14,15 @@ import {
   ChevronRight,
   Menu,
   X,
+  LogOut,
 } from "lucide-react";
 import Link from "next/link";
+import { useAuth } from "@/context/AuthContext";
+import { useRouter } from "next/navigation";
 
 export default function LandingPage() {
+  const { user, signOut } = useAuth();
+  const router = useRouter();
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeTestimonial, setActiveTestimonial] = useState(0);
@@ -45,6 +50,7 @@ export default function LandingPage() {
       rating: 5,
     },
   ];
+
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener("scroll", handleScroll);
@@ -57,6 +63,19 @@ export default function LandingPage() {
     }, 5000);
     return () => clearInterval(interval);
   }, []);
+
+  const handleGetStarted = () => {
+    if (user) {
+      router.push("/dashboard");
+    } else {
+      router.push("/auth");
+    }
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
+    setMobileMenuOpen(false);
+  };
 
   const features = [
     {
@@ -96,7 +115,6 @@ export default function LandingPage() {
         "Get started in under 60 seconds. No credit card required. Import from Google Forms or start fresh.",
     },
   ];
-
 
   const stats = [
     { value: "100K+", label: "Forms Created" },
@@ -186,30 +204,49 @@ export default function LandingPage() {
 
             {/* Desktop Menu */}
             <div className="hidden md:flex items-center space-x-8">
-              <Link
+              <a
                 href="#features"
                 className="text-gray-300 hover:text-white transition"
               >
                 Features
-              </Link>
-              <Link
-                href="#pricing"
+              </a>
+              <a
+                href="/contact"
                 className="text-gray-300 hover:text-white transition"
               >
-                Pricing
-              </Link>
-              <Link
+                Contact
+              </a>
+              <a
                 href="#testimonials"
                 className="text-gray-300 hover:text-white transition"
               >
                 Testimonials
-              </Link>
-              <Link
-                href="/auth"
-                className="w-full px-6 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-full"
-              >
-                Sign In
-              </Link>
+              </a>
+
+              {user ? (
+                <div className="flex items-center space-x-4">
+                  <Link
+                    href="/dashboard"
+                    className="px-6 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-full hover:shadow-lg hover:shadow-purple-500/50 transition-all"
+                  >
+                    Go to Dashboard
+                  </Link>
+                  <button
+                    onClick={handleSignOut}
+                    className="px-6 py-2 bg-white/10 text-white rounded-full border border-white/20 hover:bg-white/20 transition-all flex items-center space-x-2"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    <span>Sign Out</span>
+                  </button>
+                </div>
+              ) : (
+                <Link
+                  href="/auth"
+                  className="px-6 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-full hover:shadow-lg hover:shadow-purple-500/50 transition-all"
+                >
+                  Sign In
+                </Link>
+              )}
             </div>
 
             {/* Mobile Menu Button */}
@@ -230,30 +267,47 @@ export default function LandingPage() {
         {mobileMenuOpen && (
           <div className="md:hidden bg-slate-900/95 backdrop-blur-lg">
             <div className="px-4 py-6 space-y-4">
-              <Link
+              <a
                 href="#features"
                 className="block text-gray-300 hover:text-white transition"
+                onClick={() => setMobileMenuOpen(false)}
               >
                 Features
-              </Link>
-              <Link
-                href="#pricing"
-                className="block text-gray-300 hover:text-white transition"
-              >
-                Pricing
-              </Link>
-              <Link
+              </a>
+              <a
                 href="#testimonials"
                 className="block text-gray-300 hover:text-white transition"
+                onClick={() => setMobileMenuOpen(false)}
               >
                 Testimonials
-              </Link>
-              <Link
-                href="/auth"
-                className="w-full px-6 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-full"
-              >
-                Sign In
-              </Link>
+              </a>
+
+              {user ? (
+                <>
+                  <Link
+                    href="/dashboard"
+                    className="block w-full px-6 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-full text-center"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Go to Dashboard
+                  </Link>
+                  <button
+                    onClick={handleSignOut}
+                    className="w-full px-6 py-2 bg-white/10 text-white rounded-full border border-white/20 flex items-center justify-center space-x-2"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    <span>Sign Out</span>
+                  </button>
+                </>
+              ) : (
+                <Link
+                  href="/auth"
+                  className="block w-full px-6 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-full text-center"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Sign In
+                </Link>
+              )}
             </div>
           </div>
         )}
@@ -285,8 +339,11 @@ export default function LandingPage() {
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <button className="group px-8 py-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-full text-lg font-semibold hover:shadow-2xl hover:shadow-purple-500/50 hover:scale-105 transition-all duration-200 flex items-center space-x-2">
-                <span>Get Started Free</span>
+              <button
+                onClick={handleGetStarted}
+                className="group px-8 py-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-full text-lg font-semibold hover:shadow-2xl hover:shadow-purple-500/50 hover:scale-105 transition-all duration-200 flex items-center space-x-2"
+              >
+                <span>{user ? "Go to Dashboard" : "Get Started Free"}</span>
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </button>
               <button className="px-8 py-4 bg-white/10 backdrop-blur-sm text-white rounded-full text-lg font-semibold border border-white/20 hover:bg-white/20 transition-all duration-200">
@@ -294,16 +351,18 @@ export default function LandingPage() {
               </button>
             </div>
 
-            <div className="flex items-center justify-center space-x-8 text-sm text-gray-400">
-              <div className="flex items-center space-x-2">
-                <Check className="w-4 h-4 text-green-400" />
-                <span>No credit card required</span>
+            {!user && (
+              <div className="flex items-center justify-center space-x-8 text-sm text-gray-400">
+                <div className="flex items-center space-x-2">
+                  <Check className="w-4 h-4 text-green-400" />
+                  <span>No credit card required</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Check className="w-4 h-4 text-green-400" />
+                  <span>Free forever plan</span>
+                </div>
               </div>
-              <div className="flex items-center space-x-2">
-                <Check className="w-4 h-4 text-green-400" />
-                <span>Free forever plan</span>
-              </div>
-            </div>
+            )}
           </div>
 
           {/* Floating Form Preview */}
@@ -352,7 +411,7 @@ export default function LandingPage() {
               Everything you need to succeed
             </h2>
             <p className="text-xl text-gray-300 max-w-2xl mx-auto">
-              Powerful features that make form building Link breeze
+              Powerful features that make form building a breeze
             </p>
           </div>
 
@@ -440,79 +499,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Pricing Section */}
-      <section id="pricing" className="py-20 px-4 sm:px-6 lg:px-8 relative">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
-              Simple, transparent pricing
-            </h2>
-            <p className="text-xl text-gray-300">
-              Choose the perfect plan for your needs
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8">
-            {pricingPlans.map((plan, index) => (
-              <div
-                key={index}
-                className={`relative bg-white/5 backdrop-blur-lg rounded-2xl border p-8 transition-all duration-300 hover:-translate-y-2 ${
-                  plan.popular
-                    ? "border-purple-500/50 shadow-2xl shadow-purple-500/20 scale-105"
-                    : "border-white/10"
-                }`}
-              >
-                {plan.popular && (
-                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-sm font-semibold px-4 py-1 rounded-full">
-                    Most Popular
-                  </div>
-                )}
-
-                <div className="text-center mb-6">
-                  <h3 className="text-2xl font-bold text-white mb-2">
-                    {plan.name}
-                  </h3>
-                  <p className="text-gray-400 text-sm mb-4">
-                    {plan.description}
-                  </p>
-                  <div className="flex items-baseline justify-center">
-                    <span className="text-5xl font-bold text-white">
-                      {plan.price}
-                    </span>
-                    {plan.period !== "contact sales" && (
-                      <span className="text-gray-400 ml-2">/{plan.period}</span>
-                    )}
-                  </div>
-                  {plan.period === "contact sales" && (
-                    <div className="text-gray-400 text-sm mt-1">
-                      {plan.period}
-                    </div>
-                  )}
-                </div>
-
-                <ul className="space-y-3 mb-8">
-                  {plan.features.map((feature, i) => (
-                    <li key={i} className="flex items-center text-gray-300">
-                      <Check className="w-5 h-5 text-green-400 mr-3 flex-shrink-0" />
-                      <span>{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                <button
-                  className={`w-full py-3 rounded-full font-semibold transition-all duration-200 ${
-                    plan.popular
-                      ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:shadow-lg hover:shadow-purple-500/50"
-                      : "bg-white/10 text-white border border-white/20 hover:bg-white/20"
-                  }`}
-                >
-                  {plan.cta}
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* CTA Section */}
       <section className="py-20 px-4 sm:px-6 lg:px-8 relative">
@@ -524,8 +510,13 @@ export default function LandingPage() {
             <p className="text-xl text-gray-300 mb-8">
               Join thousands of teams building better forms with FormCraft
             </p>
-            <button className="group px-8 py-4 bg-white text-purple-600 rounded-full text-lg font-semibold hover:shadow-2xl hover:scale-105 transition-all duration-200 inline-flex items-center space-x-2">
-              <span>Start Building for Free</span>
+            <button
+              onClick={handleGetStarted}
+              className="group px-8 py-4 bg-white text-purple-600 rounded-full text-lg font-semibold hover:shadow-2xl hover:scale-105 transition-all duration-200 inline-flex items-center space-x-2"
+            >
+              <span>
+                {user ? "Go to Dashboard" : "Start Building for Free"}
+              </span>
               <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </button>
           </div>
@@ -552,24 +543,24 @@ export default function LandingPage() {
               <h4 className="text-white font-semibold mb-4">Product</h4>
               <ul className="space-y-2 text-gray-400 text-sm">
                 <li>
-                  <Link href="#" className="hover:text-white transition">
+                  <a href="#features" className="hover:text-white transition">
                     Features
-                  </Link>
+                  </a>
                 </li>
                 <li>
-                  <Link href="#" className="hover:text-white transition">
+                  <a href="#pricing" className="hover:text-white transition">
                     Pricing
-                  </Link>
+                  </a>
                 </li>
                 <li>
-                  <Link href="#" className="hover:text-white transition">
+                  <a href="#" className="hover:text-white transition">
                     Templates
-                  </Link>
+                  </a>
                 </li>
                 <li>
-                  <Link href="#" className="hover:text-white transition">
+                  <a href="#" className="hover:text-white transition">
                     Integrations
-                  </Link>
+                  </a>
                 </li>
               </ul>
             </div>
@@ -578,24 +569,24 @@ export default function LandingPage() {
               <h4 className="text-white font-semibold mb-4">Company</h4>
               <ul className="space-y-2 text-gray-400 text-sm">
                 <li>
-                  <Link href="#" className="hover:text-white transition">
+                  <a href="#" className="hover:text-white transition">
                     About
-                  </Link>
+                  </a>
                 </li>
                 <li>
-                  <Link href="#" className="hover:text-white transition">
+                  <a href="#" className="hover:text-white transition">
                     Blog
-                  </Link>
+                  </a>
                 </li>
                 <li>
-                  <Link href="#" className="hover:text-white transition">
+                  <a href="#" className="hover:text-white transition">
                     Careers
-                  </Link>
+                  </a>
                 </li>
                 <li>
-                  <Link href="#" className="hover:text-white transition">
+                  <a href="#" className="hover:text-white transition">
                     Contact
-                  </Link>
+                  </a>
                 </li>
               </ul>
             </div>
@@ -604,24 +595,24 @@ export default function LandingPage() {
               <h4 className="text-white font-semibold mb-4">Legal</h4>
               <ul className="space-y-2 text-gray-400 text-sm">
                 <li>
-                  <Link href="#" className="hover:text-white transition">
+                  <a href="#" className="hover:text-white transition">
                     Privacy Policy
-                  </Link>
+                  </a>
                 </li>
                 <li>
-                  <Link href="#" className="hover:text-white transition">
+                  <a href="#" className="hover:text-white transition">
                     Terms of Service
-                  </Link>
+                  </a>
                 </li>
                 <li>
-                  <Link href="#" className="hover:text-white transition">
+                  <a href="#" className="hover:text-white transition">
                     Cookie Policy
-                  </Link>
+                  </a>
                 </li>
                 <li>
-                  <Link href="#" className="hover:text-white transition">
+                  <a href="#" className="hover:text-white transition">
                     GDPR
-                  </Link>
+                  </a>
                 </li>
               </ul>
             </div>
@@ -632,24 +623,15 @@ export default function LandingPage() {
               © 2025 FormCraft. All rights reserved.
             </p>
             <div className="flex space-x-6">
-              <Link
-                href="#"
-                className="text-gray-400 hover:text-white transition"
-              >
+              <a href="#" className="text-gray-400 hover:text-white transition">
                 Twitter
-              </Link>
-              <Link
-                href="#"
-                className="text-gray-400 hover:text-white transition"
-              >
+              </a>
+              <a href="#" className="text-gray-400 hover:text-white transition">
                 LinkedIn
-              </Link>
-              <Link
-                href="#"
-                className="text-gray-400 hover:text-white transition"
-              >
+              </a>
+              <a href="#" className="text-gray-400 hover:text-white transition">
                 GitHub
-              </Link>
+              </a>
             </div>
           </div>
         </div>
