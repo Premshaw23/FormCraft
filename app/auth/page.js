@@ -509,7 +509,7 @@ export default function AuthPage() {
               </button>
             </form>
           </div>
-
+ 
           {/* Footer Links */}
           <p className="text-center text-sm text-gray-400 mt-6">
             {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
