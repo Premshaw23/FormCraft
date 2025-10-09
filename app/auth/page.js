@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import {
   Mail,
   Lock,
@@ -27,7 +27,6 @@ import { auth } from "@/lib/firebase";
 
 export default function AuthPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const { user } = useAuth();
   const [isSignUp, setIsSignUp] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -48,10 +47,9 @@ export default function AuthPage() {
   // Redirect if already logged in
   useEffect(() => {
     if (user) {
-      const redirect = searchParams.get("redirect") || "/dashboard";
-      router.push(redirect);
+      router.push("/dashboard");
     }
-  }, [user, router, searchParams]);
+  }, [user, router]);
 
   // Password strength checker
   const getPasswordStrength = (password) => {
@@ -133,10 +131,9 @@ export default function AuthPage() {
         );
 
         // Redirect after 3 seconds
-        setTimeout(() => {
-          const redirect = searchParams.get("redirect") || "/dashboard";
-          router.push(redirect);
-        }, 3000);
+       setTimeout(() => {
+         router.push("/dashboard");
+       }, 3000);
       } else {
         // Sign In
         await signInWithEmailAndPassword(
@@ -145,8 +142,7 @@ export default function AuthPage() {
           formData.password
         );
 
-        const redirect = searchParams.get("redirect") || "/dashboard";
-        router.push(redirect);
+       router.push("/dashboard");
       }
     } catch (err) {
       console.error("Auth error:", err);
@@ -193,9 +189,7 @@ export default function AuthPage() {
     try {
       const provider = new GoogleAuthProvider();
       await signInWithPopup(auth, provider);
-
-      const redirect = searchParams.get("redirect") || "/dashboard";
-      router.push(redirect);
+      router.push("/dashboard");
     } catch (err) {
       console.error("Google sign in error:", err);
 
