@@ -23,7 +23,8 @@ import {
   sendPasswordResetEmail,
   updateProfile,
 } from "firebase/auth";
-import { auth } from "@/lib/firebase";
+import { auth, db } from "@/lib/firebase";
+import { doc, setDoc } from "firebase/firestore";
 
 export default function AuthPage() {
   const router = useRouter();
@@ -118,10 +119,24 @@ export default function AuthPage() {
           formData.password
         );
 
-        // Update profile with name
+        // After line 131 (after updateProfile):
         await updateProfile(userCredential.user, {
           displayName: formData.name,
         });
+
+        // ADD THESE LINES:
+        const userRef = doc(db, "users", userCredential.user.uid);
+        await setDoc(userRef, {
+          email: formData.email,
+          displayName: formData.name,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          bio: "",
+          phone: "",
+          company: "",
+          location: "",
+        });
+
 
         // Send verification email
         await sendEmailVerification(userCredential.user);
@@ -131,9 +146,9 @@ export default function AuthPage() {
         );
 
         // Redirect after 3 seconds
-       setTimeout(() => {
-         router.push("/dashboard");
-       }, 3000);
+        setTimeout(() => {
+          router.push("/dashboard");
+        }, 3000);
       } else {
         // Sign In
         await signInWithEmailAndPassword(
