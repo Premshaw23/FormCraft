@@ -74,7 +74,7 @@ export default function FormCard({ form, viewMode = "grid", onDelete, onDuplicat
   if (viewMode === "grid") {
     return (
       <>
-        <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl overflow-hidden hover:bg-white/10 hover:border-purple-500/50 transition-all group">
+        <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl hover:bg-white/10 hover:border-purple-500/50 transition-all group">
           {/* Thumbnail Preview */}
           <div className="h-32 bg-gradient-to-br from-purple-500/20 to-pink-500/20 p-4 flex items-center justify-center border-b border-white/10">
             <FileText className="w-12 h-12 text-purple-400 opacity-50" />
@@ -325,7 +325,7 @@ export default function FormCard({ form, viewMode = "grid", onDelete, onDuplicat
                     className="fixed inset-0 z-40"
                     onClick={() => setMenuOpen(false)}
                   />
-                  <div className="absolute right-0 mt-2 w-48 bg-slate-800/95 backdrop-blur-lg border border-white/10 rounded-lg shadow-2xl py-2 z-50">
+                  <div className="absolute right-0 mt-2 w-48 bg-slate-800/95 backdrop-blur-lg border border-white/10 rounded-lg shadow-2xl py-2 z-[999]">
                     <button
                       onClick={handleDuplicate}
                       className="w-full flex items-center gap-3 px-4 py-2 text-gray-300 hover:text-white hover:bg-white/5 transition-colors text-sm"

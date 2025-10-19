@@ -13,7 +13,7 @@ export default function FormEditPage({ params }) {
   const unwrappedParams = use(params);
   const formId = unwrappedParams.id;
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
 
   const [form, setForm] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -23,7 +23,13 @@ export default function FormEditPage({ params }) {
   // Load form data
   useEffect(() => {
     const loadForm = async () => {
+      if (!user?.uid) {
+        console.log("No user found, waiting...");
+        return;
+      }
+
       try {
+        console.log("Loading form:", formId, "for user:", user.uid);
         const formData = await getFormById(formId);
 
         if (!formData) {
@@ -32,26 +38,54 @@ export default function FormEditPage({ params }) {
           return;
         }
 
-        // Check if user owns this form
-        if (formData.userId !== user.uid) {
+        // Check if user owns this form (check both userId and creatorId)
+        if (formData.userId !== user.uid && formData.creatorId !== user.uid) {
+          console.error(
+            "Permission denied. Form user:",
+            formData.userId,
+            "Current user:",
+            user.uid
+          );
           toast.error("You do not have permission to edit this form");
           router.push("/dashboard");
           return;
         }
 
+        console.log("Form loaded successfully:", formData);
         setForm(formData);
       } catch (error) {
         console.error("Error loading form:", error);
-        toast.error("Failed to load form");
+
+        // Check if it's a permissions error
+        if (
+          error.message.includes("permissions") ||
+          error.message.includes("Missing or insufficient")
+        ) {
+          toast.error(
+            "Permission denied. Please check your Firestore security rules."
+          );
+        } else {
+          toast.error("Failed to load form");
+        }
+
+        // Redirect to dashboard after error
+        setTimeout(() => {
+          router.push("/dashboard");
+        }, 2000);
       } finally {
         setLoading(false);
       }
     };
 
-    if (user && formId) {
+    // Wait for auth to be ready
+    if (!authLoading && user && formId) {
       loadForm();
+    } else if (!authLoading && !user) {
+      // No user logged in
+      toast.error("Please log in to edit forms");
+      router.push("/login");
     }
-  }, [formId, user, router]);
+  }, [formId, user, authLoading, router]);
 
   // Auto-save function
   const handleSave = async (updates) => {
@@ -88,7 +122,7 @@ export default function FormEditPage({ params }) {
   // Add new field
   const handleAddField = (fieldType) => {
     const newField = {
-      id: Date.now().toString(),
+      id: `field_${Date.now()}`,
       type: fieldType.id,
       ...fieldType.defaultConfig,
     };
@@ -113,7 +147,7 @@ export default function FormEditPage({ params }) {
 
     const duplicatedField = {
       ...fieldToDuplicate,
-      id: Date.now().toString(),
+      id: `field_${Date.now()}`,
       label: `${fieldToDuplicate.label} (Copy)`,
     };
 
@@ -152,7 +186,7 @@ export default function FormEditPage({ params }) {
     handleSave({ theme });
   };
 
-  if (loading) {
+  if (authLoading || loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
         <div className="text-center">

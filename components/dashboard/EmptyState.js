@@ -7,7 +7,7 @@ export default function EmptyState({
   title = "No items found",
   description = "Get started by creating something new",
   actionText = "Create New",
-  actionHref = "#",
+  actionHref = "/forms/new",
   onActionClick = null,
   icon: Icon = FileQuestion,
 }) {

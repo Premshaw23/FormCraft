@@ -25,13 +25,18 @@ export default function NewFormPage() {
       return;
     }
 
+    if (!user?.uid) {
+      toast.error("You must be logged in to create a form");
+      return;
+    }
+
     setLoading(true);
 
     try {
       const newForm = {
         title: formData.title.trim(),
         description: formData.description.trim(),
-        fields: [], // Start with empty fields
+        fields: [],
         status: "draft",
         settings: {
           submitButtonText: "Submit",
@@ -47,19 +52,34 @@ export default function NewFormPage() {
         },
       };
 
+      console.log("Creating form for user:", user.uid);
       const formId = await createForm(user.uid, newForm);
+
+      if (!formId) {
+        throw new Error("Failed to get form ID");
+      }
+
+      console.log("Form created successfully with ID:", formId);
       toast.success("Form created successfully!");
 
-      // Redirect to form builder
+      // Wait a bit longer for Firestore to propagate
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      // Navigate to edit page
       router.push(`/forms/${formId}/edit`);
     } catch (error) {
       console.error("Error creating form:", error);
-      toast.error("Failed to create form");
+      toast.error(error.message || "Failed to create form");
       setLoading(false);
     }
   };
 
   const handleQuickStart = async (template) => {
+    if (!user?.uid) {
+      toast.error("You must be logged in to create a form");
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -87,28 +107,28 @@ export default function NewFormPage() {
             status: "draft",
             fields: [
               {
-                id: Date.now().toString(),
+                id: `field_${Date.now()}_1`,
                 type: "short_text",
                 label: "Your Name",
                 placeholder: "John Doe",
                 required: true,
               },
               {
-                id: (Date.now() + 1).toString(),
+                id: `field_${Date.now()}_2`,
                 type: "email",
                 label: "Email Address",
                 placeholder: "email@example.com",
                 required: true,
               },
               {
-                id: (Date.now() + 2).toString(),
+                id: `field_${Date.now()}_3`,
                 type: "rating",
                 label: "How would you rate our service?",
                 required: true,
                 maxRating: 5,
               },
               {
-                id: (Date.now() + 3).toString(),
+                id: `field_${Date.now()}_4`,
                 type: "long_text",
                 label: "Additional Comments",
                 placeholder: "Share your thoughts...",
@@ -127,7 +147,7 @@ export default function NewFormPage() {
             status: "draft",
             fields: [
               {
-                id: Date.now().toString(),
+                id: `field_${Date.now()}_1`,
                 type: "multiple_choice",
                 label: "How did you hear about us?",
                 required: true,
@@ -139,7 +159,7 @@ export default function NewFormPage() {
                 ],
               },
               {
-                id: (Date.now() + 1).toString(),
+                id: `field_${Date.now()}_2`,
                 type: "checkboxes",
                 label: "Which features are you interested in?",
                 required: false,
@@ -157,21 +177,21 @@ export default function NewFormPage() {
             status: "draft",
             fields: [
               {
-                id: Date.now().toString(),
+                id: `field_${Date.now()}_1`,
                 type: "short_text",
                 label: "Full Name",
                 placeholder: "John Doe",
                 required: true,
               },
               {
-                id: (Date.now() + 1).toString(),
+                id: `field_${Date.now()}_2`,
                 type: "email",
                 label: "Email",
                 placeholder: "email@example.com",
                 required: true,
               },
               {
-                id: (Date.now() + 2).toString(),
+                id: `field_${Date.now()}_3`,
                 type: "long_text",
                 label: "Message",
                 placeholder: "How can we help?",
@@ -181,14 +201,28 @@ export default function NewFormPage() {
             ],
           };
           break;
+
+        default:
+          throw new Error("Invalid template selected");
       }
 
+      console.log("Creating form from template for user:", user.uid);
       const formId = await createForm(user.uid, templateData);
+
+      if (!formId) {
+        throw new Error("Failed to get form ID");
+      }
+
+      console.log("Form created successfully with ID:", formId);
       toast.success("Form created from template!");
+
+      // Wait for Firestore to propagate
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
       router.push(`/forms/${formId}/edit`);
     } catch (error) {
       console.error("Error creating form from template:", error);
-      toast.error("Failed to create form");
+      toast.error(error.message || "Failed to create form");
       setLoading(false);
     }
   };
