@@ -24,7 +24,8 @@ import {
   updateProfile,
 } from "firebase/auth";
 import { auth, db } from "@/lib/firebase";
-import { doc, setDoc } from "firebase/firestore";
+import { doc, setDoc, getDoc } from "firebase/firestore"; // Add getDoc
+
 
 export default function AuthPage() {
   const router = useRouter();
@@ -137,7 +138,6 @@ export default function AuthPage() {
           location: "",
         });
 
-
         // Send verification email
         await sendEmailVerification(userCredential.user);
 
@@ -157,7 +157,7 @@ export default function AuthPage() {
           formData.password
         );
 
-       router.push("/dashboard");
+        router.push("/dashboard");
       }
     } catch (err) {
       console.error("Auth error:", err);
@@ -197,13 +197,32 @@ export default function AuthPage() {
     }
   };
 
+  // In AuthPage - handleGoogleSignIn function
   const handleGoogleSignIn = async () => {
     setError("");
     setLoading(true);
 
     try {
       const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
+      const result = await signInWithPopup(auth, provider);
+
+      // ADD THIS: Check if user document exists, create if not
+      const userRef = doc(db, "users", result.user.uid);
+      const userDoc = await getDoc(userRef);
+
+      if (!userDoc.exists()) {
+        await setDoc(userRef, {
+          email: result.user.email,
+          displayName: result.user.displayName || "",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          bio: "",
+          phone: "",
+          company: "",
+          location: "",
+        });
+      }
+
       router.push("/dashboard");
     } catch (err) {
       console.error("Google sign in error:", err);

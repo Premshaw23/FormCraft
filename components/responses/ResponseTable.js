@@ -1,8 +1,8 @@
-// components/responses/ResponseTable.jsx
+// components/responses/ResponseTable.jsx - FIXED DATE ISSUE
 "use client";
 import React, { useState } from "react";
 import { Eye, Trash2, User, Mail, Calendar } from "lucide-react";
-import { format } from "date-fns";
+import { format, parseISO, isValid } from "date-fns";
 
 const ResponseTable = ({ responses, onViewResponse, onDeleteResponse }) => {
   const [selectedRows, setSelectedRows] = useState([]);
@@ -21,17 +21,32 @@ const ResponseTable = ({ responses, onViewResponse, onDeleteResponse }) => {
     );
   };
 
-  // Helper function to safely format date
-  const formatSubmittedDate = (submittedAt) => {
-    if (!submittedAt) return "N/A";
+  // Helper function to safely parse and format date
+  const formatSubmittedDate = (dateValue) => {
+    if (!dateValue) return "N/A";
 
     try {
-      // Convert to Date object if it's a string or timestamp
-      const date =
-        submittedAt instanceof Date ? submittedAt : new Date(submittedAt);
+      let date = null;
 
-      // Check if date is valid
-      if (isNaN(date.getTime())) {
+      // If it's already a Date object
+      if (dateValue instanceof Date) {
+        date = dateValue;
+      }
+      // If it's a Firestore Timestamp with toDate method
+      else if (dateValue.toDate && typeof dateValue.toDate === "function") {
+        date = dateValue.toDate();
+      }
+      // If it's a timestamp number
+      else if (typeof dateValue === "number") {
+        date = new Date(dateValue);
+      }
+      // If it's an ISO string
+      else if (typeof dateValue === "string") {
+        date = parseISO(dateValue);
+      }
+
+      // Validate the date
+      if (!date || !isValid(date)) {
         return "Invalid date";
       }
 

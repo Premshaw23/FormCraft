@@ -1,7 +1,7 @@
-// components/form-builder/fields/FieldWrapper.jsx
+// components/form-builder/fields/FieldWrapper.jsx - FIXED DRAG
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import {
   GripVertical,
   Copy,
@@ -24,6 +24,8 @@ export default function FieldWrapper({
   onDuplicate,
   onMoveUp,
   onMoveDown,
+  onDragStart,
+  onDragEnd,
 }) {
   const [showConfig, setShowConfig] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -33,8 +35,41 @@ export default function FieldWrapper({
     setShowDeleteConfirm(false);
   };
 
+  // Prevent unnecessary re-renders
+  const handleUpdate = useCallback(
+    (updates) => {
+      onUpdate(updates);
+    },
+    [onUpdate]
+  );
+
+  // Handle drag start from the grip icon
+  const handleDragHandleMouseDown = (e) => {
+    // Enable dragging on the parent
+    const wrapper = e.currentTarget.closest("[data-field-wrapper]");
+    if (wrapper) {
+      wrapper.setAttribute("draggable", "true");
+    }
+  };
+
+  const handleDragHandleMouseUp = (e) => {
+    // Disable dragging when not holding the grip
+    const wrapper = e.currentTarget.closest("[data-field-wrapper]");
+    if (wrapper) {
+      wrapper.setAttribute("draggable", "false");
+    }
+  };
+
   return (
     <div
+      data-field-wrapper
+      draggable="false"
+      onDragStart={onDragStart}
+      onDragEnd={(e) => {
+        onDragEnd?.(e);
+        // Disable dragging after drag ends
+        e.currentTarget.setAttribute("draggable", "false");
+      }}
       className={`bg-white/5 backdrop-blur-sm border rounded-xl transition-all ${
         isSelected
           ? "border-purple-500 ring-2 ring-purple-500/20"
@@ -45,14 +80,19 @@ export default function FieldWrapper({
       {/* Field Header - Always Visible */}
       <div className="p-4 flex items-start gap-3">
         {/* Drag Handle */}
-        <div className="mt-1 cursor-move text-slate-400 hover:text-white transition-colors">
+        <div
+          className="mt-1 cursor-grab active:cursor-grabbing text-slate-400 hover:text-white transition-colors"
+          onMouseDown={handleDragHandleMouseDown}
+          onMouseUp={handleDragHandleMouseUp}
+          title="Drag to reorder"
+        >
           <GripVertical className="w-5 h-5" />
         </div>
 
         {/* Field Content */}
         <div className="flex-1 min-w-0">
           {/* Field Preview */}
-          <FieldPreview field={field} onUpdate={onUpdate} />
+          <FieldPreview field={field} onUpdate={handleUpdate} />
         </div>
 
         {/* Action Buttons */}
@@ -112,7 +152,7 @@ export default function FieldWrapper({
           {/* Delete */}
           <button
             onClick={(e) => {
-              e.stopPropagation();
+              e.stopPropagagation();
               setShowDeleteConfirm(true);
             }}
             className="p-1.5 hover:bg-red-500/20 rounded transition-colors"
@@ -128,7 +168,7 @@ export default function FieldWrapper({
         <div className="border-t border-white/10 p-4 bg-white/5">
           <FieldConfig
             field={field}
-            onUpdate={onUpdate}
+            onUpdate={handleUpdate}
             onClose={() => setShowConfig(false)}
           />
         </div>

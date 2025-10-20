@@ -1,7 +1,7 @@
-// components/form-builder/SettingsSidebar.jsx
+// components/form-builder/SettingsSidebar.jsx - FIXED WITH DEBOUNCING
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { X, Palette, Settings as SettingsIcon, Share2 } from "lucide-react";
 
 export default function SettingsSidebar({
@@ -66,7 +66,7 @@ export default function SettingsSidebar({
   );
 }
 
-// Design Tab Component
+// Design Tab Component - Colors don't need debouncing (instant feedback is good)
 function DesignTab({ form, onUpdateTheme }) {
   const theme = form.theme || {};
 
@@ -171,56 +171,95 @@ function DesignTab({ form, onUpdateTheme }) {
   );
 }
 
-// Settings Tab Component
+// Settings Tab Component - WITH DEBOUNCING FOR TEXT INPUTS
 function SettingsTab({ form, onUpdateSettings }) {
   const settings = form.settings || {};
 
+  // Local state for immediate UI updates
+  const [localSettings, setLocalSettings] = useState(settings);
+  const timeoutRef = useRef(null);
+
+  // Update local state when form settings change externally
+  useEffect(() => {
+    setLocalSettings(settings);
+  }, [settings]);
+
+  // Debounced save function
+  const handleDebouncedUpdate = (updates) => {
+    // Update local state immediately
+    setLocalSettings((prev) => ({ ...prev, ...updates }));
+
+    // Clear existing timeout
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+
+    // Set new timeout to save after 1.5 seconds
+    timeoutRef.current = setTimeout(() => {
+      onUpdateSettings({ ...settings, ...updates });
+    }, 1500);
+  };
+
+  // Immediate save for toggles (no debounce needed)
+  const handleImmediateUpdate = (updates) => {
+    const newSettings = { ...settings, ...updates };
+    setLocalSettings(newSettings);
+    onUpdateSettings(newSettings);
+  };
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
+
   return (
     <div className="space-y-6">
-      {/* Submit Button Text */}
+      {/* Submit Button Text - DEBOUNCED */}
       <div>
         <label className="block text-sm font-medium text-slate-300 mb-2">
           Submit Button Text
         </label>
         <input
           type="text"
-          value={settings.submitButtonText || "Submit"}
+          value={localSettings.submitButtonText || "Submit"}
           onChange={(e) =>
-            onUpdateSettings({ ...settings, submitButtonText: e.target.value })
+            handleDebouncedUpdate({ submitButtonText: e.target.value })
           }
           className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
         />
       </div>
 
-      {/* Confirmation Message */}
+      {/* Confirmation Message - DEBOUNCED */}
       <div>
         <label className="block text-sm font-medium text-slate-300 mb-2">
           Confirmation Message
         </label>
         <textarea
-          value={settings.confirmationMessage || "Thank you for your response!"}
+          value={
+            localSettings.confirmationMessage || "Thank you for your response!"
+          }
           onChange={(e) =>
-            onUpdateSettings({
-              ...settings,
-              confirmationMessage: e.target.value,
-            })
+            handleDebouncedUpdate({ confirmationMessage: e.target.value })
           }
           rows={3}
           className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none"
         />
       </div>
 
-      {/* Max Submissions */}
+      {/* Max Submissions - DEBOUNCED */}
       <div>
         <label className="block text-sm font-medium text-slate-300 mb-2">
           Maximum Submissions (Optional)
         </label>
         <input
           type="number"
-          value={settings.maxSubmissions || ""}
+          value={localSettings.maxSubmissions || ""}
           onChange={(e) =>
-            onUpdateSettings({
-              ...settings,
+            handleDebouncedUpdate({
               maxSubmissions: e.target.value ? parseInt(e.target.value) : null,
             })
           }
@@ -230,7 +269,7 @@ function SettingsTab({ form, onUpdateSettings }) {
         />
       </div>
 
-      {/* Toggles */}
+      {/* Toggles - IMMEDIATE (No debounce for checkboxes) */}
       <div className="space-y-3">
         {/* Allow Multiple Responses */}
         <div className="flex items-center justify-between p-3 bg-white/5 rounded-lg">
@@ -245,10 +284,9 @@ function SettingsTab({ form, onUpdateSettings }) {
           <label className="relative inline-flex items-center cursor-pointer">
             <input
               type="checkbox"
-              checked={settings.allowMultipleResponses || false}
+              checked={localSettings.allowMultipleResponses || false}
               onChange={(e) =>
-                onUpdateSettings({
-                  ...settings,
+                handleImmediateUpdate({
                   allowMultipleResponses: e.target.checked,
                 })
               }
@@ -271,9 +309,9 @@ function SettingsTab({ form, onUpdateSettings }) {
           <label className="relative inline-flex items-center cursor-pointer">
             <input
               type="checkbox"
-              checked={settings.requireAuth !== false}
+              checked={localSettings.requireAuth !== false}
               onChange={(e) =>
-                onUpdateSettings({ ...settings, requireAuth: e.target.checked })
+                handleImmediateUpdate({ requireAuth: e.target.checked })
               }
               className="sr-only peer"
             />
@@ -285,7 +323,7 @@ function SettingsTab({ form, onUpdateSettings }) {
   );
 }
 
-// Share Tab Component
+// Share Tab Component - No changes needed
 function ShareTab({ form }) {
   const shareUrl = `${
     typeof window !== "undefined" ? window.location.origin : ""

@@ -4,6 +4,8 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
+// At the top of ProfilePage
+import { doc, updateDoc, getDoc, setDoc } from "firebase/firestore"; // Add setDoc
 import {
   User,
   Mail,
@@ -16,7 +18,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { updateProfile } from "firebase/auth";
-import { doc, updateDoc, getDoc } from "firebase/firestore";
+// At the top of AuthPage
 import { db } from "@/lib/firebase";
 import toast from "react-hot-toast";
 import { format } from "date-fns";
@@ -41,19 +43,46 @@ export default function ProfilePage() {
       return;
     }
 
+    // In ProfilePage - loadProfile function
     const loadProfile = async () => {
       try {
-        const userDoc = await getDoc(doc(db, "users", user.uid));
-        const userData = userDoc.exists() ? userDoc.data() : {};
+        const userRef = doc(db, "users", user.uid);
+        const userDoc = await getDoc(userRef);
 
-        setProfileData({
-          displayName: user.displayName || "",
-          email: user.email || "",
-          bio: userData.bio || "",
-          phone: userData.phone || "",
-          company: userData.company || "",
-          location: userData.location || "",
-        });
+        // If document doesn't exist, create it
+        if (!userDoc.exists()) {
+          const initialData = {
+            email: user.email || "",
+            displayName: user.displayName || "",
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            bio: "",
+            phone: "",
+            company: "",
+            location: "",
+          };
+
+          await setDoc(userRef, initialData);
+
+          setProfileData({
+            displayName: user.displayName || "",
+            email: user.email || "",
+            bio: "",
+            phone: "",
+            company: "",
+            location: "",
+          });
+        } else {
+          const userData = userDoc.data();
+          setProfileData({
+            displayName: user.displayName || userData.displayName || "",
+            email: user.email || "",
+            bio: userData.bio || "",
+            phone: userData.phone || "",
+            company: userData.company || "",
+            location: userData.location || "",
+          });
+        }
       } catch (error) {
         console.error("Error loading profile:", error);
         toast.error("Failed to load profile");
@@ -65,6 +94,7 @@ export default function ProfilePage() {
     loadProfile();
   }, [user, router]);
 
+  // In ProfilePage - handleSave function
   const handleSave = async (e) => {
     e.preventDefault();
     setSaving(true);
@@ -80,6 +110,7 @@ export default function ProfilePage() {
       // Update Firestore user document
       const userRef = doc(db, "users", user.uid);
       await updateDoc(userRef, {
+        displayName: profileData.displayName, // ADD THIS LINE
         bio: profileData.bio,
         phone: profileData.phone,
         company: profileData.company,

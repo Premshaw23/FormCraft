@@ -121,7 +121,6 @@ export default function ResponsesPage({ params }) {
     setFilteredResponses(filtered);
   }, [searchQuery, dateFilter, responses]);
 
-  // Calculate statistics for ResponseStatsCards
   const calculateStats = () => {
     if (responses.length === 0) {
       return {
@@ -132,15 +131,15 @@ export default function ResponsesPage({ params }) {
       };
     }
 
-    // Get last response date
+    // Get last response date - FIX: Return the raw timestamp/date value
     const sortedByDate = [...responses].sort((a, b) => {
-      const dateA = a.submittedAt ? new Date(a.submittedAt) : new Date(0);
-      const dateB = b.submittedAt ? new Date(b.submittedAt) : new Date(0);
+      const dateA = a.submittedAt ? new Date(a.submittedAt).getTime() : 0;
+      const dateB = b.submittedAt ? new Date(b.submittedAt).getTime() : 0;
       return dateB - dateA;
     });
-    const lastResponse = sortedByDate[0]?.submittedAt
-      ? new Date(sortedByDate[0].submittedAt)
-      : null;
+
+    // FIX: Pass the raw submittedAt value instead of creating a new Date
+    const lastResponse = sortedByDate[0]?.submittedAt || null;
 
     // Calculate average completion time
     const timesWithValues = responses.filter(
@@ -168,7 +167,7 @@ export default function ResponsesPage({ params }) {
       total: responses.length,
       responseRate,
       avgCompletionTime: avgTime,
-      lastResponse,
+      lastResponse, // This now passes the raw timestamp
     };
   };
 

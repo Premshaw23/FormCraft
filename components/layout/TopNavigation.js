@@ -8,6 +8,9 @@ import {
   Sparkles,
   User,
   Settings,
+  Shield,
+  CreditCard,
+  HelpCircle,
   LogOut,
   ChevronDown,
   Clock,
@@ -30,6 +33,7 @@ export default function TopNavigation({ onMenuClick }) {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchResults, setSearchResults] = useState([]);
   const searchRef = useRef(null);
+  const userMenuRef = useRef(null);
 
   // Close search when clicking outside
   useEffect(() => {
@@ -61,6 +65,17 @@ export default function TopNavigation({ onMenuClick }) {
     setSearchResults(filtered);
     setSearchOpen(true);
   }, [searchQuery, forms]);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target)) {
+        setUserMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   // Keyboard shortcut (Ctrl+K or Cmd+K)
   useEffect(() => {
@@ -286,7 +301,7 @@ export default function TopNavigation({ onMenuClick }) {
           </button>
 
           {/* User Menu */}
-          <div className="relative">
+          <div className="relative" ref={userMenuRef}>
             <button
               onClick={() => setUserMenuOpen(!userMenuOpen)}
               className="flex items-center space-x-2 lg:space-x-3 p-2 hover:bg-white/10 rounded-lg transition-colors"
@@ -305,60 +320,95 @@ export default function TopNavigation({ onMenuClick }) {
                 {user?.displayName || user?.email?.split("@")[0] || "User"}
               </span>
 
-              <ChevronDown className="hidden lg:block w-4 h-4 text-gray-400" />
+              <ChevronDown
+                className={`hidden lg:block w-4 h-4 text-gray-400 transition-transform ${
+                  userMenuOpen ? "rotate-180" : ""
+                }`}
+              />
             </button>
 
             {/* Dropdown Menu */}
             {userMenuOpen && (
-              <>
-                {/* Backdrop for mobile */}
-                <div
-                  className="lg:hidden fixed inset-0 z-40"
-                  onClick={() => setUserMenuOpen(false)}
-                ></div>
-
-                {/* Dropdown */}
-                <div className="absolute right-0 mt-2 w-56 bg-slate-800/95 backdrop-blur-lg border border-white/10 rounded-lg shadow-2xl py-2 z-50">
-                  {/* User Info */}
-                  <div className="px-4 py-3 border-b border-white/10">
-                    <p className="text-white font-medium truncate">
-                      {user?.displayName || "User"}
-                    </p>
-                    <p className="text-gray-400 text-sm truncate">
-                      {user?.email}
-                    </p>
+              <div className="absolute right-0 mt-2 w-64 bg-slate-800/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                {/* User Info Header */}
+                <div className="px-4 py-4 bg-gradient-to-r from-purple-500/10 to-pink-500/10 border-b border-white/10">
+                  <div className="flex items-center space-x-3 mb-2">
+                    <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
+                      <span className="text-white text-lg font-bold">
+                        {user?.displayName?.charAt(0)?.toUpperCase() ||
+                          user?.email?.charAt(0)?.toUpperCase() ||
+                          "U"}
+                      </span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-white font-semibold truncate">
+                        {user?.displayName || "User"}
+                      </p>
+                      <p className="text-gray-400 text-xs truncate">
+                        {user?.email}
+                      </p>
+                    </div>
                   </div>
+                  {user?.emailVerified && (
+                    <div className="flex items-center space-x-1 text-xs text-green-400">
+                      <Shield className="w-3 h-3" />
+                      <span>Verified Account</span>
+                    </div>
+                  )}
+                </div>
 
-                  {/* Menu Items */}
+                {/* Menu Items */}
+                <div className="py-2">
                   <Link
                     href="/profile"
                     onClick={() => setUserMenuOpen(false)}
-                    className="flex items-center space-x-3 px-4 py-2.5 text-gray-300 hover:text-white hover:bg-white/5 transition-colors"
+                    className="flex items-center space-x-3 px-4 py-2.5 text-gray-300 hover:text-white hover:bg-white/10 transition-all group"
                   >
-                    <User className="w-5 h-5" />
-                    <span>Profile</span>
+                    <User className="w-5 h-5 text-gray-400 group-hover:text-purple-400 transition-colors" />
+                    <span>My Profile</span>
                   </Link>
 
                   <Link
                     href="/settings"
                     onClick={() => setUserMenuOpen(false)}
-                    className="flex items-center space-x-3 px-4 py-2.5 text-gray-300 hover:text-white hover:bg-white/5 transition-colors"
+                    className="flex items-center space-x-3 px-4 py-2.5 text-gray-300 hover:text-white hover:bg-white/10 transition-all group"
                   >
-                    <Settings className="w-5 h-5" />
+                    <Settings className="w-5 h-5 text-gray-400 group-hover:text-purple-400 transition-colors" />
                     <span>Settings</span>
                   </Link>
 
-                  <div className="border-t border-white/10 my-2"></div>
+                  <Link
+                    href="/billing"
+                    onClick={() => setUserMenuOpen(false)}
+                    className="flex items-center space-x-3 px-4 py-2.5 text-gray-300 hover:text-white hover:bg-white/10 transition-all group"
+                  >
+                    <CreditCard className="w-5 h-5 text-gray-400 group-hover:text-purple-400 transition-colors" />
+                    <span>Billing</span>
+                  </Link>
 
+                  <Link
+                    href="/help"
+                    onClick={() => setUserMenuOpen(false)}
+                    className="flex items-center space-x-3 px-4 py-2.5 text-gray-300 hover:text-white hover:bg-white/10 transition-all group"
+                  >
+                    <HelpCircle className="w-5 h-5 text-gray-400 group-hover:text-purple-400 transition-colors" />
+                    <span>Help & Support</span>
+                  </Link>
+                </div>
+
+                <div className="border-t border-white/10"></div>
+
+                {/* Sign Out */}
+                <div className="py-2">
                   <button
                     onClick={handleSignOut}
-                    className="w-full flex items-center space-x-3 px-4 py-2.5 text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors"
+                    className="w-full flex items-center space-x-3 px-4 py-2.5 text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-all group"
                   >
                     <LogOut className="w-5 h-5" />
-                    <span>Sign Out</span>
+                    <span className="font-medium">Sign Out</span>
                   </button>
                 </div>
-              </>
+              </div>
             )}
           </div>
         </div>

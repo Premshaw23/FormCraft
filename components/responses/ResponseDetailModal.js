@@ -1,4 +1,4 @@
-// components/responses/ResponseDetailModal.jsx
+// components/responses/ResponseDetailModal.jsx - FIXED DATE ISSUE
 "use client";
 import React from "react";
 import {
@@ -12,7 +12,7 @@ import {
   Download,
   Trash2,
 } from "lucide-react";
-import { format } from "date-fns";
+import { format, parseISO, isValid } from "date-fns";
 
 const ResponseDetailModal = ({
   response,
@@ -34,6 +34,40 @@ const ResponseDetailModal = ({
   const getFieldType = (fieldId) => {
     const field = formFields.find((f) => f.id === fieldId);
     return field?.type || "text";
+  };
+
+  // Helper to safely parse dates
+  const parseDate = (dateValue) => {
+    if (!dateValue) return null;
+
+    try {
+      // If it's already a Date object
+      if (dateValue instanceof Date) {
+        return isValid(dateValue) ? dateValue : null;
+      }
+
+      // If it's a Firestore Timestamp
+      if (dateValue.toDate && typeof dateValue.toDate === "function") {
+        return dateValue.toDate();
+      }
+
+      // If it's a timestamp number
+      if (typeof dateValue === "number") {
+        const date = new Date(dateValue);
+        return isValid(date) ? date : null;
+      }
+
+      // If it's an ISO string
+      if (typeof dateValue === "string") {
+        const date = parseISO(dateValue);
+        return isValid(date) ? date : null;
+      }
+
+      return null;
+    } catch (error) {
+      console.error("Error parsing date:", error);
+      return null;
+    }
   };
 
   const formatAnswer = (fieldId, value) => {
@@ -119,6 +153,9 @@ const ResponseDetailModal = ({
     // Default: return as text
     return <p className="text-gray-300">{value}</p>;
   };
+
+  // Parse the submission date
+  const submittedDate = parseDate(response.submittedAt);
 
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -225,14 +262,12 @@ const ResponseDetailModal = ({
                       <span className="text-xs">Submitted At</span>
                     </div>
                     <p className="text-white font-medium">
-                      {response.submittedAt
-                        ? format(response.submittedAt, "MMM dd, yyyy")
+                      {submittedDate
+                        ? format(submittedDate, "MMM dd, yyyy")
                         : "N/A"}
                     </p>
                     <p className="text-sm text-gray-400">
-                      {response.submittedAt
-                        ? format(response.submittedAt, "h:mm a")
-                        : ""}
+                      {submittedDate ? format(submittedDate, "h:mm a") : ""}
                     </p>
                   </div>
 

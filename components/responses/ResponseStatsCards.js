@@ -10,18 +10,49 @@ const ResponseStatsCards = ({ stats }) => {
     if (!lastResponse) return "No responses yet";
 
     try {
-      // Convert to Date object if it's a string
-      const date =
-        lastResponse instanceof Date ? lastResponse : new Date(lastResponse);
+      // Handle various date formats
+      let date;
+
+      if (lastResponse instanceof Date) {
+        date = lastResponse;
+      } else if (
+        typeof lastResponse === "string" ||
+        typeof lastResponse === "number"
+      ) {
+        date = new Date(lastResponse);
+      } else if (lastResponse._seconds) {
+        // Handle Firestore Timestamp
+        date = new Date(lastResponse._seconds * 1000);
+      } else if (lastResponse.seconds) {
+        // Handle Firestore Timestamp alternative format
+        date = new Date(lastResponse.seconds * 1000);
+      } else if (
+        lastResponse.toDate &&
+        typeof lastResponse.toDate === "function"
+      ) {
+        // Handle Firestore Timestamp with toDate method
+        date = lastResponse.toDate();
+      } else {
+        console.warn("Unhandled date format:", lastResponse);
+        return "Invalid date format";
+      }
 
       // Check if date is valid
-      if (isNaN(date.getTime())) {
+      if (!date || isNaN(date.getTime())) {
+        console.warn("Invalid date value:", lastResponse);
+        return "Invalid date";
+      }
+
+      // Additional check for unrealistic dates
+      const year = date.getFullYear();
+      if (year < 2000 || year > 2100) {
+        console.warn("Date outside realistic range:", date);
         return "Invalid date";
       }
 
       return formatDistanceToNow(date, { addSuffix: true });
     } catch (error) {
-      console.error("Error formatting date:", error);
+      console.error("Error formatting date:", error, lastResponse);
       return "Invalid date";
     }
   };
@@ -29,7 +60,7 @@ const ResponseStatsCards = ({ stats }) => {
   const cards = [
     {
       title: "Total Responses",
-      value: stats.total || 0,
+      value: stats?.total || 0,
       icon: Users,
       color: "from-blue-500 to-cyan-500",
       bgColor: "bg-blue-500/10",
@@ -37,7 +68,7 @@ const ResponseStatsCards = ({ stats }) => {
     },
     {
       title: "Response Rate",
-      value: stats.responseRate ? `${stats.responseRate}%` : "N/A",
+      value: stats?.responseRate ? `${stats.responseRate}%` : "N/A",
       icon: TrendingUp,
       color: "from-green-500 to-emerald-500",
       bgColor: "bg-green-500/10",
@@ -45,7 +76,7 @@ const ResponseStatsCards = ({ stats }) => {
     },
     {
       title: "Avg Completion Time",
-      value: stats.avgCompletionTime || "N/A",
+      value: stats?.avgCompletionTime || "N/A",
       icon: Clock,
       color: "from-orange-500 to-amber-500",
       bgColor: "bg-orange-500/10",
@@ -53,7 +84,7 @@ const ResponseStatsCards = ({ stats }) => {
     },
     {
       title: "Last Response",
-      value: formatLastResponse(stats.lastResponse),
+      value: formatLastResponse(stats?.lastResponse),
       icon: Calendar,
       color: "from-purple-500 to-pink-500",
       bgColor: "bg-purple-500/10",
@@ -67,7 +98,7 @@ const ResponseStatsCards = ({ stats }) => {
         <div
           key={index}
           className="bg-slate-800/50 backdrop-blur-xl border border-white/10 rounded-xl p-6 
-                     hover:border-purple-500/30 transition-all"
+                     hover:border-purple-500/30 transition-all duration-300"
         >
           <div className="flex items-center justify-between mb-4">
             <div className={`p-3 rounded-lg ${card.bgColor}`}>

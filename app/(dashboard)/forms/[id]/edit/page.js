@@ -1,7 +1,7 @@
-// app/(dashboard)/forms/[id]/edit/page.js
+// app/(dashboard)/forms/[id]/edit/page.js - FIXED VERSION (No Errors)
 "use client";
 
-import { use, useState, useEffect } from "react";
+import { use, useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { getFormById, updateForm } from "@/lib/services/formService";
@@ -19,6 +19,10 @@ export default function FormEditPage({ params }) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState(null);
+
+  // Refs for debouncing
+  const saveTimeoutRef = useRef(null);
+  const pendingChangesRef = useRef(null);
 
   // Load form data
   useEffect(() => {
@@ -38,7 +42,7 @@ export default function FormEditPage({ params }) {
           return;
         }
 
-        // Check if user owns this form (check both userId and creatorId)
+        // Check if user owns this form
         if (formData.userId !== user.uid && formData.creatorId !== user.uid) {
           console.error(
             "Permission denied. Form user:",
@@ -56,7 +60,6 @@ export default function FormEditPage({ params }) {
       } catch (error) {
         console.error("Error loading form:", error);
 
-        // Check if it's a permissions error
         if (
           error.message.includes("permissions") ||
           error.message.includes("Missing or insufficient")
@@ -68,7 +71,6 @@ export default function FormEditPage({ params }) {
           toast.error("Failed to load form");
         }
 
-        // Redirect to dashboard after error
         setTimeout(() => {
           router.push("/dashboard");
         }, 2000);
@@ -77,114 +79,287 @@ export default function FormEditPage({ params }) {
       }
     };
 
-    // Wait for auth to be ready
     if (!authLoading && user && formId) {
       loadForm();
     } else if (!authLoading && !user) {
-      // No user logged in
       toast.error("Please log in to edit forms");
       router.push("/login");
     }
   }, [formId, user, authLoading, router]);
 
-  // Auto-save function
-  const handleSave = async (updates) => {
-    setSaving(true);
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+      // Save any pending changes before unmounting
+      if (pendingChangesRef.current) {
+        updateForm(formId, {
+          ...pendingChangesRef.current,
+          updatedAt: new Date(),
+        }).catch(console.error);
+      }
+    };
+  }, [formId]);
 
-    try {
-      await updateForm(formId, {
+  // Immediate save function (for Firestore)
+  const saveToFirestore = useCallback(
+    async (updates) => {
+      try {
+        await updateForm(formId, {
+          ...updates,
+          updatedAt: new Date(),
+        });
+        setLastSaved(new Date());
+        pendingChangesRef.current = null;
+      } catch (error) {
+        console.error("Error saving form:", error);
+        toast.error("Failed to save changes");
+      } finally {
+        setSaving(false);
+      }
+    },
+    [formId]
+  );
+
+  // Debounced save function
+  const debouncedSave = useCallback(
+    (updates) => {
+      // Clear existing timeout
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+
+      // Store pending changes
+      pendingChangesRef.current = {
+        ...pendingChangesRef.current,
         ...updates,
-        updatedAt: new Date(),
-      });
+      };
 
+      setSaving(true);
+
+      // Set new timeout for 1.5 seconds
+      saveTimeoutRef.current = setTimeout(() => {
+        saveToFirestore(pendingChangesRef.current);
+      }, 1500);
+    },
+    [saveToFirestore]
+  );
+
+  // Update form immediately in state, debounce Firestore save
+  const handleSave = useCallback(
+    (updates) => {
+      // Update local state immediately for instant UI feedback
       setForm((prev) => ({ ...prev, ...updates }));
-      setLastSaved(new Date());
 
-      // Don't show toast for every autosave to avoid spam
-      // toast.success('Saved');
-    } catch (error) {
-      console.error("Error saving form:", error);
-      toast.error("Failed to save changes");
-    } finally {
-      setSaving(false);
-    }
-  };
+      // Debounce the Firestore save
+      debouncedSave(updates);
+    },
+    [debouncedSave]
+  );
 
   // Update form field
-  const handleUpdateField = (fieldId, updates) => {
-    const updatedFields = form.fields.map((field) =>
-      field.id === fieldId ? { ...field, ...updates } : field
-    );
+  const handleUpdateField = useCallback(
+    (fieldId, updates) => {
+      setForm((prev) => {
+        if (!prev) return prev;
 
-    handleSave({ fields: updatedFields });
-  };
+        const updatedFields = prev.fields.map((field) =>
+          field.id === fieldId ? { ...field, ...updates } : field
+        );
 
-  // Add new field
-  const handleAddField = (fieldType) => {
-    const newField = {
-      id: `field_${Date.now()}`,
-      type: fieldType.id,
-      ...fieldType.defaultConfig,
-    };
+        // Debounce save for field updates
+        debouncedSave({ fields: updatedFields });
 
-    const updatedFields = [...form.fields, newField];
-    handleSave({ fields: updatedFields });
+        return { ...prev, fields: updatedFields };
+      });
+    },
+    [debouncedSave]
+  );
 
-    toast.success(`${fieldType.label} added`);
-  };
+  // Add new field (immediate save - not debounced)
+  const handleAddField = useCallback(
+    async (fieldType) => {
+      if (!form) return;
 
-  // Delete field
-  const handleDeleteField = (fieldId) => {
-    const updatedFields = form.fields.filter((field) => field.id !== fieldId);
-    handleSave({ fields: updatedFields });
-    toast.success("Field deleted");
-  };
+      const newField = {
+        id: `field_${Date.now()}`,
+        type: fieldType.id,
+        ...fieldType.defaultConfig,
+      };
 
-  // Duplicate field
-  const handleDuplicateField = (fieldId) => {
-    const fieldToDuplicate = form.fields.find((f) => f.id === fieldId);
-    if (!fieldToDuplicate) return;
+      const updatedFields = [...form.fields, newField];
 
-    const duplicatedField = {
-      ...fieldToDuplicate,
-      id: `field_${Date.now()}`,
-      label: `${fieldToDuplicate.label} (Copy)`,
-    };
+      // Update UI immediately
+      setForm((prev) => ({ ...prev, fields: updatedFields }));
 
-    const fieldIndex = form.fields.findIndex((f) => f.id === fieldId);
-    const updatedFields = [
-      ...form.fields.slice(0, fieldIndex + 1),
-      duplicatedField,
-      ...form.fields.slice(fieldIndex + 1),
-    ];
+      // Save immediately (don't debounce for adding fields)
+      setSaving(true);
+      try {
+        await updateForm(formId, {
+          fields: updatedFields,
+          updatedAt: new Date(),
+        });
+        setLastSaved(new Date());
+        toast.success(`${fieldType.label} added`);
+      } catch (error) {
+        console.error("Error adding field:", error);
+        toast.error("Failed to add field");
+      } finally {
+        setSaving(false);
+      }
+    },
+    [form, formId]
+  );
 
-    handleSave({ fields: updatedFields });
-    toast.success("Field duplicated");
-  };
+  // Delete field (immediate save)
+  const handleDeleteField = useCallback(
+    async (fieldId) => {
+      if (!form) return;
 
-  // Reorder fields
-  const handleReorderFields = (startIndex, endIndex) => {
-    const result = Array.from(form.fields);
-    const [removed] = result.splice(startIndex, 1);
-    result.splice(endIndex, 0, removed);
+      const updatedFields = form.fields.filter((field) => field.id !== fieldId);
 
-    handleSave({ fields: result });
-  };
+      setForm((prev) => ({ ...prev, fields: updatedFields }));
 
-  // Update form metadata
-  const handleUpdateMetadata = (updates) => {
-    handleSave(updates);
-  };
+      setSaving(true);
+      try {
+        await updateForm(formId, {
+          fields: updatedFields,
+          updatedAt: new Date(),
+        });
+        setLastSaved(new Date());
+        toast.success("Field deleted");
+      } catch (error) {
+        console.error("Error deleting field:", error);
+        toast.error("Failed to delete field");
+      } finally {
+        setSaving(false);
+      }
+    },
+    [form, formId]
+  );
 
-  // Update form settings
-  const handleUpdateSettings = (settings) => {
-    handleSave({ settings });
-  };
+  // Duplicate field (immediate save)
+  const handleDuplicateField = useCallback(
+    async (fieldId) => {
+      if (!form) return;
 
-  // Update form theme
-  const handleUpdateTheme = (theme) => {
-    handleSave({ theme });
-  };
+      const fieldToDuplicate = form.fields.find((f) => f.id === fieldId);
+      if (!fieldToDuplicate) return;
+
+      const duplicatedField = {
+        ...fieldToDuplicate,
+        id: `field_${Date.now()}`,
+        label: `${fieldToDuplicate.label} (Copy)`,
+      };
+
+      const fieldIndex = form.fields.findIndex((f) => f.id === fieldId);
+      const updatedFields = [
+        ...form.fields.slice(0, fieldIndex + 1),
+        duplicatedField,
+        ...form.fields.slice(fieldIndex + 1),
+      ];
+
+      setForm((prev) => ({ ...prev, fields: updatedFields }));
+
+      setSaving(true);
+      try {
+        await updateForm(formId, {
+          fields: updatedFields,
+          updatedAt: new Date(),
+        });
+        setLastSaved(new Date());
+        toast.success("Field duplicated");
+      } catch (error) {
+        console.error("Error duplicating field:", error);
+        toast.error("Failed to duplicate field");
+      } finally {
+        setSaving(false);
+      }
+    },
+    [form, formId]
+  );
+
+  // Reorder fields (immediate save)
+  const handleReorderFields = useCallback(
+    async (startIndex, endIndex) => {
+      if (!form) return;
+
+      const result = Array.from(form.fields);
+      const [removed] = result.splice(startIndex, 1);
+      result.splice(endIndex, 0, removed);
+
+      setForm((prev) => ({ ...prev, fields: result }));
+
+      setSaving(true);
+      try {
+        await updateForm(formId, {
+          fields: result,
+          updatedAt: new Date(),
+        });
+        setLastSaved(new Date());
+      } catch (error) {
+        console.error("Error reordering fields:", error);
+        toast.error("Failed to reorder fields");
+      } finally {
+        setSaving(false);
+      }
+    },
+    [form, formId]
+  );
+
+  // Update form metadata (debounced for text inputs)
+  const handleUpdateMetadata = useCallback(
+    (updates) => {
+      handleSave(updates);
+    },
+    [handleSave]
+  );
+
+  // Update form settings (immediate save)
+  const handleUpdateSettings = useCallback(
+    async (settings) => {
+      setForm((prev) => ({ ...prev, settings }));
+
+      setSaving(true);
+      try {
+        await updateForm(formId, {
+          settings,
+          updatedAt: new Date(),
+        });
+        setLastSaved(new Date());
+      } catch (error) {
+        console.error("Error updating settings:", error);
+        toast.error("Failed to update settings");
+      } finally {
+        setSaving(false);
+      }
+    },
+    [formId]
+  );
+
+  // Update form theme (immediate save)
+  const handleUpdateTheme = useCallback(
+    async (theme) => {
+      setForm((prev) => ({ ...prev, theme }));
+
+      setSaving(true);
+      try {
+        await updateForm(formId, {
+          theme,
+          updatedAt: new Date(),
+        });
+        setLastSaved(new Date());
+      } catch (error) {
+        console.error("Error updating theme:", error);
+        toast.error("Failed to update theme");
+      } finally {
+        setSaving(false);
+      }
+    },
+    [formId]
+  );
 
   if (authLoading || loading) {
     return (
