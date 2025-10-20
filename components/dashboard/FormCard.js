@@ -18,10 +18,60 @@ import {
 import { format } from "date-fns";
 import toast from "react-hot-toast";
 
-export default function FormCard({ form, viewMode = "grid", onDelete, onDuplicate }) {
+export default function FormCard({
+  form,
+  viewMode = "grid",
+  onDelete,
+  onDuplicate,
+}) {
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+
+  // Helper function to safely parse date
+  const parseDate = (date) => {
+    if (!date) return new Date();
+
+    // If it's already a Date object
+    if (date instanceof Date) {
+      // Check if it's a valid date
+      return isNaN(date.getTime()) ? new Date() : date;
+    }
+
+    // If it's a Firestore Timestamp
+    if (date.toDate && typeof date.toDate === "function") {
+      try {
+        return date.toDate();
+      } catch (error) {
+        return new Date();
+      }
+    }
+
+    // If it's a string or number, try to parse it
+    try {
+      const parsed = new Date(date);
+      return isNaN(parsed.getTime()) ? new Date() : parsed;
+    } catch (error) {
+      return new Date();
+    }
+  };
+
+  // Helper function to format date safely
+  const formatDate = (date, formatStr) => {
+    try {
+      const parsedDate = parseDate(date);
+
+      // Double-check the date is valid before formatting
+      if (isNaN(parsedDate.getTime())) {
+        return "Recently";
+      }
+
+      return format(parsedDate, formatStr);
+    } catch (error) {
+      console.error("Date formatting error:", error, date);
+      return "Recently";
+    }
+  };
 
   const handleEdit = () => {
     router.push(`/forms/${form.id}/edit`);
@@ -74,9 +124,9 @@ export default function FormCard({ form, viewMode = "grid", onDelete, onDuplicat
   if (viewMode === "grid") {
     return (
       <>
-        <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl hover:bg-white/10 hover:border-purple-500/50 transition-all group">
+        <div className="min-w-0 w-full bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl hover:bg-white/10 hover:border-purple-500/50 transition-all group">
           {/* Thumbnail Preview */}
-          <div className="h-32 bg-gradient-to-br from-purple-500/20 to-pink-500/20 p-4 flex items-center justify-center border-b border-white/10">
+          <div className="h-28 md:h-32 bg-gradient-to-br from-purple-500/20 to-pink-500/20 p-4 flex items-center justify-center border-b border-white/10">
             <FileText className="w-12 h-12 text-purple-400 opacity-50" />
           </div>
 
@@ -116,22 +166,14 @@ export default function FormCard({ form, viewMode = "grid", onDelete, onDuplicat
             {/* Last Edited */}
             <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-4">
               <Clock className="w-3 h-3" />
-              <span>
-                Updated{" "}
-                {format(
-                  typeof form.updatedAt === "string"
-                    ? new Date(form.updatedAt)
-                    : form.updatedAt.toDate(),
-                  "MMM d, yyyy"
-                )}
-              </span>
+              <span>Updated {formatDate(form.updatedAt, "MMM d, yyyy")}</span>
             </div>
 
             {/* Actions */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <button
                 onClick={handleEdit}
-                className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-lg transition-colors text-sm font-medium"
+                className="flex-1 min-w-0 flex items-center justify-center gap-2 px-3 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-lg transition-colors text-sm font-medium"
               >
                 <Edit className="w-4 h-4" />
                 Edit
@@ -272,13 +314,7 @@ export default function FormCard({ form, viewMode = "grid", onDelete, onDuplicat
                 <div className="flex items-center gap-1">
                   <Clock className="w-3 h-3" />
                   <span>
-                    Updated{" "}
-                    {format(
-                      typeof form.updatedAt === "string"
-                        ? new Date(form.updatedAt)
-                        : form.updatedAt.toDate(),
-                      "MMM d, yyyy"
-                    )}
+                    Updated {formatDate(form.updatedAt, "MMM d, yyyy")}
                   </span>
                 </div>
               </div>

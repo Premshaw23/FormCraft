@@ -78,7 +78,7 @@ export default function FieldWrapper({
       onClick={onSelect}
     >
       {/* Field Header - Always Visible */}
-      <div className="p-4 flex items-start gap-3">
+      <div className="p-4 flex md:flex-row md:items-start flex-col justify-end gap-3">
         {/* Drag Handle */}
         <div
           className="mt-1 cursor-grab active:cursor-grabbing text-slate-400 hover:text-white transition-colors"
@@ -152,7 +152,7 @@ export default function FieldWrapper({
           {/* Delete */}
           <button
             onClick={(e) => {
-              e.stopPropagagation();
+              e.stopPropagation();
               setShowDeleteConfirm(true);
             }}
             className="p-1.5 hover:bg-red-500/20 rounded transition-colors"

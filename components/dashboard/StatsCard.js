@@ -13,11 +13,11 @@ export default function StatsCard({
   const isPositive = trend === "up";
 
   return (
-    <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-6 hover:bg-white/10 hover:border-purple-500/30 transition-all duration-300 group">
+  <div className="min-w-0 w-full bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-6 hover:bg-white/10 hover:border-purple-500/30 transition-all duration-300 group">
       {/* Header */}
       <div className="flex items-start justify-between mb-4">
         <div
-          className={`w-12 h-12 bg-gradient-to-br ${gradient} rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}
+          className={`min-w-0 w-12 h-12 bg-gradient-to-br ${gradient} rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}
         >
           <Icon className="w-6 h-6 text-white" />
         </div>

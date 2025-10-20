@@ -26,7 +26,7 @@ export default function FieldConfig({ field, onUpdate, onClose }) {
 
   return (
     <div className="space-y-4" onClick={(e) => e.stopPropagation()}>
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4 gap-3 md:gap-0">
         <h4 className="text-white font-semibold">Field Configuration</h4>
         <button
           onClick={onClose}
@@ -197,17 +197,17 @@ export default function FieldConfig({ field, onUpdate, onClose }) {
           </label>
           <div className="space-y-2">
             {field.options?.map((option, index) => (
-              <div key={index} className="flex gap-2">
+              <div key={index} className="flex flex-col sm:flex-row gap-2">
                 <input
                   type="text"
                   value={option}
                   onChange={(e) => handleOptionChange(index, e.target.value)}
-                  className="flex-1 px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="flex-1 px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500 w-full"
                   placeholder={`Option ${index + 1}`}
                 />
                 <button
                   onClick={() => handleRemoveOption(index)}
-                  className="p-2 hover:bg-red-500/20 text-red-400 rounded-lg transition-colors"
+                  className="p-2 hover:bg-red-500/20 text-red-400 rounded-lg transition-colors self-start sm:self-center"
                 >
                   <X className="w-4 h-4" />
                 </button>

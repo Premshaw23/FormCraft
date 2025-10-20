@@ -97,15 +97,15 @@ export default function FormCanvas({
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-8">
+    <div className="max-w-4xl mx-auto lg:px-8 py-1">
       {/* Form Header Section */}
-      <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-8 mb-8">
+      <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-4 md:p-8 mb-6 md:mb-8">
         {/* Form Title (Editable) - DEBOUNCED */}
         <input
           type="text"
           value={localTitle}
           onChange={(e) => handleTitleChange(e.target.value)}
-          className="text-3xl font-bold text-white bg-transparent border-none focus:outline-none focus:ring-2 focus:ring-purple-500 rounded px-2 py-1 w-full mb-4"
+          className="text-2xl md:text-3xl lg:text-4xl font-bold text-white bg-transparent border-none focus:outline-none focus:ring-2 focus:ring-purple-500 rounded px-2 py-1 w-full mb-3 md:mb-4"
           placeholder="Untitled Form"
         />
 
@@ -122,43 +122,48 @@ export default function FormCanvas({
       {/* Fields List */}
       {form.fields.length > 0 ? (
         <div className="space-y-4 mb-8">
-          {form.fields.map((field, index) => (
-            <div
-              key={field.id}
-              onDragOver={(e) => handleDragOver(e, index)}
-              onDragLeave={handleDragLeave}
-              onDrop={(e) => handleDrop(e, index)}
-              className={`transition-all ${
-                draggedIndex === index ? "opacity-50 scale-95" : ""
-              } ${
-                dragOverIndex === index && draggedIndex !== index
-                  ? "translate-y-2"
-                  : ""
-              }`}
-            >
-              <FieldWrapper
-                field={field}
-                index={index}
-                isSelected={selectedFieldId === field.id}
-                onSelect={() => setSelectedFieldId(field.id)}
-                onUpdate={(updates) => onUpdateField(field.id, updates)}
-                onDelete={() => onDeleteField(field.id)}
-                onDuplicate={() => onDuplicateField(field.id)}
-                onMoveUp={() => {
-                  if (index > 0) {
-                    onReorderFields(index, index - 1);
-                  }
-                }}
-                onMoveDown={() => {
-                  if (index < form.fields.length - 1) {
-                    onReorderFields(index, index + 1);
-                  }
-                }}
-                onDragStart={() => handleDragStart(index)}
-                onDragEnd={handleDragEnd}
-              />
-            </div>
-          ))}
+          <div className="space-y-4">
+            {form.fields.map((field, index) => (
+              <div
+                key={field.id}
+                onDragOver={(e) => handleDragOver(e, index)}
+                onDragLeave={handleDragLeave}
+                onDrop={(e) => handleDrop(e, index)}
+                style={{ touchAction: "pan-y" }}
+                className={`transition-all ${
+                  draggedIndex === index ? "opacity-50 scale-95" : ""
+                } ${
+                  dragOverIndex === index && draggedIndex !== index
+                    ? "translate-y-2"
+                    : ""
+                }`}
+              >
+                <div className="max-w-full overflow-x-auto">
+                  <FieldWrapper
+                    field={field}
+                    index={index}
+                    isSelected={selectedFieldId === field.id}
+                    onSelect={() => setSelectedFieldId(field.id)}
+                    onUpdate={(updates) => onUpdateField(field.id, updates)}
+                    onDelete={() => onDeleteField(field.id)}
+                    onDuplicate={() => onDuplicateField(field.id)}
+                    onMoveUp={() => {
+                      if (index > 0) {
+                        onReorderFields(index, index - 1);
+                      }
+                    }}
+                    onMoveDown={() => {
+                      if (index < form.fields.length - 1) {
+                        onReorderFields(index, index + 1);
+                      }
+                    }}
+                    onDragStart={() => handleDragStart(index)}
+                    onDragEnd={handleDragEnd}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       ) : (
         // Empty State

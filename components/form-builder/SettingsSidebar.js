@@ -19,49 +19,69 @@ export default function SettingsSidebar({
   ];
 
   return (
-    <div className="flex flex-col h-full">
-      {/* Header */}
-      <div className="p-6 border-b border-white/10 flex items-center justify-between">
-        <h2 className="text-lg font-bold text-white">Form Settings</h2>
-        <button
-          onClick={onClose}
-          className="p-2 hover:bg-white/10 rounded-lg transition-colors"
-        >
-          <X className="w-5 h-5 text-slate-400" />
-        </button>
-      </div>
+    <div className="h-full">
+      {/* Mobile overlay: only visible on small screens. Clicking it closes the panel. */}
+      <div
+        className="fixed inset-0 bg-black/40 z-40 md:hidden"
+        onClick={onClose}
+        aria-hidden="true"
+      />
 
-      {/* Tabs */}
-      <div className="flex border-b border-white/10">
-        {tabs.map((tab) => {
-          const Icon = tab.icon;
-          return (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex-1 px-4 py-3 text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
-                activeTab === tab.id
-                  ? "text-purple-400 border-b-2 border-purple-500"
-                  : "text-slate-400 hover:text-white"
-              }`}
-            >
-              <Icon className="w-4 h-4" />
-              {tab.label}
-            </button>
-          );
-        })}
-      </div>
+      {/*
+        Responsive panel:
+        - On small screens: fixed slide-over from the right, full-width up to `max-w-md`.
+        - On md+ screens: behaves like a normal (relative) sidebar.
+      */}
+      <aside
+        className="fixed right-0 top-0 bottom-0 z-50 w-full max-w-md bg-slate-900 md:relative md:inset-auto md:w-96 md:max-w-none md:z-0 flex flex-col h-full"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Form settings"
+      >
+        {/* Header */}
+        <div className="p-4 md:p-6 border-b border-white/10 flex items-center justify-between">
+          <h2 className="text-lg font-bold text-white">Form Settings</h2>
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+            aria-label="Close settings"
+          >
+            <X className="w-5 h-5 text-slate-400" />
+          </button>
+        </div>
 
-      {/* Content */}
-      <div className="flex-1 overflow-y-auto p-6">
-        {activeTab === "design" && (
-          <DesignTab form={form} onUpdateTheme={onUpdateTheme} />
-        )}
-        {activeTab === "settings" && (
-          <SettingsTab form={form} onUpdateSettings={onUpdateSettings} />
-        )}
-        {activeTab === "share" && <ShareTab form={form} />}
-      </div>
+        {/* Tabs */}
+        <div className="flex border-b border-white/10">
+          {tabs.map((tab) => {
+            const Icon = tab.icon;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex-1 px-4 py-3 text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
+                  activeTab === tab.id
+                    ? "text-purple-400 border-b-2 border-purple-500"
+                    : "text-slate-400 hover:text-white"
+                }`}
+              >
+                <Icon className="w-4 h-4" />
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto p-6">
+          {activeTab === "design" && (
+            <DesignTab form={form} onUpdateTheme={onUpdateTheme} />
+          )}
+          {activeTab === "settings" && (
+            <SettingsTab form={form} onUpdateSettings={onUpdateSettings} />
+          )}
+          {activeTab === "share" && <ShareTab form={form} />}
+        </div>
+      </aside>
     </div>
   );
 }

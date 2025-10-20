@@ -18,10 +18,10 @@ export default function PreviewModal({ form, onClose }) {
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div className="bg-slate-900 rounded-2xl w-full h-full max-h-[90vh] flex flex-col border border-white/10">
         {/* Modal Header */}
-        <div className="p-6 border-b border-white/10 flex items-center justify-between">
+        <div className="p-4 md:p-6 border-b border-white/10 flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-bold text-white">Form Preview</h2>
-            <p className="text-slate-400 text-sm mt-1">
+            <h2 className="text-2xl md:text-3xl font-bold text-white">Form Preview</h2>
+            <p className="text-slate-400 text-sm md:text-sm mt-1">
               How your form will look to respondents
             </p>
           </div>
@@ -59,14 +59,15 @@ export default function PreviewModal({ form, onClose }) {
         </div>
 
         {/* Preview Content */}
-        <div className="flex-1 overflow-y-auto bg-slate-800/50 p-8">
-          <div
-            className="mx-auto transition-all duration-300"
-            style={{
-              width: viewModes.find((m) => m.id === viewMode)?.width,
-              maxWidth: "100%",
-            }}
-          >
+        <div className="flex-1 overflow-y-auto bg-slate-800/50 p-4 md:p-8">
+          <div className="mx-auto transition-all duration-300 max-w-full scroll-x-auto">
+            <div
+              className="mx-auto transition-all duration-300 max-w-full"
+              style={{
+                width: viewModes.find((m) => m.id === viewMode)?.width,
+                maxWidth: "100%",
+              }}
+            >
             {/* Form Preview Card */}
             <div
               className="rounded-2xl shadow-2xl overflow-hidden"
@@ -96,7 +97,7 @@ export default function PreviewModal({ form, onClose }) {
               </div>
 
               {/* Form Fields */}
-              <div className="p-8 space-y-6">
+              <div className="p-4 md:p-8 space-y-6">
                 {form.fields.length > 0 ? (
                   form.fields.map((field) => (
                     <div key={field.id}>
@@ -124,6 +125,7 @@ export default function PreviewModal({ form, onClose }) {
               </div>
             </div>
           </div>
+        </div>
         </div>
       </div>
     </div>

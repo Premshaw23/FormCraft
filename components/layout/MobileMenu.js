@@ -39,7 +39,7 @@ export default function MobileMenu({ isOpen, onClose }) {
       ></div>
 
       {/* Drawer */}
-      <div className="fixed left-0 top-0 bottom-0 w-80 max-w-[85vw] bg-slate-900 border-r border-white/10 z-50 lg:hidden transform transition-transform duration-300 overflow-y-auto">
+  <div className="fixed left-0 top-0 bottom-0 w-full max-w-[85vw] sm:max-w-xs bg-slate-900 border-r border-white/10 z-50 lg:hidden transform transition-transform duration-300 overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-white/10">
           <div className="flex items-center space-x-2">

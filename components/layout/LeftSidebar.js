@@ -147,14 +147,14 @@ export default function LeftSidebar({ className = "" }) {
 
   return (
     <aside
-      className={`fixed left-0 top-16 h-[calc(100vh-4rem)] w-64 bg-slate-900/95 backdrop-blur-lg border-r border-white/10 flex flex-col ${className}`}
+      className={`fixed left-0 top-16 md:top-16 h-[calc(100vh-4rem)] w-56 md:w-64 bg-slate-900/95 backdrop-blur-lg border-r border-white/10 flex flex-col ${className}`}
     >
       {/* Main Navigation */}
       <nav className="flex-1 px-3 py-6 overflow-y-auto custom-scrollbar">
         {/* Quick Create Button */}
         <Link
           href="/forms/new"
-          className={`flex items-center justify-center space-x-2 w-full px-4 py-3 mb-6 rounded-lg transition-all group relative overflow-hidden ${
+          className={`flex items-center justify-center space-x-2 w-full px-3 py-3 mb-6 rounded-lg transition-all group relative overflow-hidden min-w-0 ${
             currentPlan === "free" && formsCount >= maxForms
               ? "bg-gray-500/20 text-gray-500 cursor-not-allowed"
               : "bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:shadow-lg hover:shadow-purple-500/50 hover:scale-[1.02]"

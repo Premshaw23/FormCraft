@@ -14,8 +14,9 @@ export default function DashboardLayout({ children }) {
       <TopNavigation onMenuClick={() => setSidebarOpen(true)} />
 
       <div className="flex pt-16">
-        {/* Left Sidebar - Desktop */}
-        <LeftSidebar className="hidden lg:flex" />
+        {/* Left Sidebar - Desktop (show from md and up) */}
+        <LeftSidebar className="hidden md:flex" />
+        
 
         {/* Mobile Sidebar Drawer */}
         <MobileMenu
@@ -24,8 +25,8 @@ export default function DashboardLayout({ children }) {
         />
 
         {/* Main Content Area */}
-        <main className="flex-1 lg:ml-64 min-h-[calc(100vh-4rem)]">
-          <div className="p-6 lg:p-8">{children}</div>
+        <main className="flex-1 md:ml-64 min-h-[calc(100vh-4rem)]">
+          <div className="p-4 md:p-6 lg:p-8">{children}</div>
         </main>
       </div>
     </div>

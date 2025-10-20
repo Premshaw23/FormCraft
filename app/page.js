@@ -345,7 +345,7 @@ export default function LandingPage() {
 
         {/* Mobile Menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden bg-slate-900/95 backdrop-blur-lg">
+          <div className="md:hidden bg-slate-900/20 backdrop-blur-lg">
             <div className="px-4 py-6 space-y-4">
               <Link
                 href="#features"
@@ -353,6 +353,13 @@ export default function LandingPage() {
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Features
+              </Link>
+              <Link
+                href="#contact"
+                className="block text-gray-300 hover:text-white transition"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Contact
               </Link>
 
               {user ? (

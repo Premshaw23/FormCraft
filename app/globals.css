@@ -131,3 +131,54 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+/* Responsive safety helpers
+   - Allow horizontal scrolling at the page level if any child exceeds viewport width so
+     fixed-width components won't break the layout.
+   - Ensure media elements scale down to fit the container.
+   - Provide a small utility `.scroll-x-auto` for localized horizontal scroll regions.
+*/
+html, body, #__next {
+  width: 100%;
+  min-width: 0;
+  /* Let the page scroll horizontally when necessary instead of overflowing visually */
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Use border-box everywhere to keep sizing predictable */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* Responsive media */
+img,
+video,
+canvas,
+iframe,
+svg {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Constrain common layout containers so they don't force viewport overflow */
+main,
+header,
+footer,
+.container,
+.page,
+.page-content {
+  max-width: 100%;
+  min-width: 0;
+  overflow-wrap: break-word;
+}
+
+/* Utility: localized horizontal scroll */
+.scroll-x-auto {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+

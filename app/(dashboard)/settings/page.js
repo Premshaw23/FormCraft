@@ -191,18 +191,18 @@ export default function SettingsPage() {
       </div>
 
       {/* Email (Read-only) */}
-      <div className="bg-slate-800/50 border border-white/10 rounded-xl p-6">
+      <div className="bg-slate-800/50 border border-white/10 rounded-xl md:p-6 p-3">
         <label className="block text-sm font-semibold text-gray-400 mb-2">
           Email Address
         </label>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center md:gap-3 gap-1">
           <input
             type="email"
             value={user?.email || ""}
             disabled
-            className="flex-1 px-4 py-3 bg-slate-900/30 border border-white/5 rounded-lg text-gray-400 cursor-not-allowed"
+            className="flex-1 px-3 py-3 bg-slate-900/30 border border-white/5 rounded-lg text-gray-400 cursor-not-allowed"
           />
-          <span className="px-3 py-1 bg-green-500/10 text-green-400 border border-green-500/20 rounded-full text-xs font-medium">
+          <span className="md:px-3 px-1 py-1 bg-green-500/10 text-green-400 border border-green-500/20 rounded-full text-xs font-medium">
             Verified
           </span>
         </div>

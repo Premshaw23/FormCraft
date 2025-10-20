@@ -96,7 +96,8 @@ export default function DashboardPage() {
 
       {/* Stats Overview */}
       {!loading && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
+          <div className="min-w-0 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <StatsCard
             title="Total Forms"
             value={total}
@@ -127,12 +128,15 @@ export default function DashboardPage() {
             icon={FileEdit}
             gradient="from-yellow-500 to-orange-500"
           />
+          </div>
         </div>
       )}
 
       {/* Filter Tabs */}
       {!loading && forms.length > 0 && (
-        <FilterTabs
+        <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
+          <div className="min-w-[480px] md:min-w-0">
+            <FilterTabs
           activeTab={activeFilter}
           onTabChange={handleFilterChange}
           tabs={[
@@ -141,12 +145,14 @@ export default function DashboardPage() {
             { label: "Published", value: "published", count: published },
             { label: "Archived", value: "archived", count: archived },
           ]}
-        />
+            />
+          </div>
+        </div>
       )}
 
       {/* Sort & View Options */}
       {!loading && forms.length > 0 && (
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-4">
           <p className="text-gray-400 text-sm">
             Showing {filteredForms.length} of {total} forms
           </p>
@@ -202,7 +208,7 @@ export default function DashboardPage() {
 
       {/* Forms Grid */}
       <div>
-        {loading ? (
+          {loading ? (
           <div className="flex items-center justify-center py-20">
             <div className="text-center">
               <Loader2 className="w-12 h-12 text-purple-500 animate-spin mx-auto mb-4" />
@@ -218,16 +224,18 @@ export default function DashboardPage() {
             actionLabel="Create New Form"
           />
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <CreateFormCard />
-            {sortedForms.map((form) => (
-              <FormCard
-                key={form.id}
-                form={form}
-                onDelete={deleteForm}
-                onDuplicate={duplicateForm}
-              />
-            ))}
+          <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
+            <div className="min-w-0 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <CreateFormCard key="create-form-card" />
+              {sortedForms.map((form) => (
+                <FormCard
+                  key={form.id}
+                  form={form}
+                  onDelete={deleteForm}
+                  onDuplicate={duplicateForm}
+                />
+              ))}
+            </div>
           </div>
         )}
       </div>

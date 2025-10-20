@@ -128,14 +128,22 @@ export default function MyFormsPage() {
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
-            className="px-4 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all"
+            className="appearance-none px-4 py-2 pr-8 bg-gradient-to-r from-purple-800/40 to-indigo-700/40 border border-purple-500/20 rounded-lg text-sm text-white shadow-inner hover:border-purple-400/40 focus:outline-none focus:ring-2 focus:ring-purple-500/40 transition-all cursor-pointer"
           >
-            <option value="updated">Last Updated</option>
-            <option value="created">Date Created</option>
-            <option value="name">Name (A-Z)</option>
-            <option value="responses">Most Responses</option>
+            <option value="updated" className="bg-slate-800 text-white">
+              Last Updated
+            </option>
+            <option value="created" className="bg-slate-800 text-white">
+              Date Created
+            </option>
+            <option value="name" className="bg-slate-800 text-white">
+              Name (A-Z)
+            </option>
+            <option value="responses" className="bg-slate-800 text-white">
+              Most Responses
+            </option>
           </select>
-
+          
           {/* View Mode Toggle */}
           <div className="flex items-center gap-1 bg-white/5 border border-white/10 rounded-lg p-1">
             <button

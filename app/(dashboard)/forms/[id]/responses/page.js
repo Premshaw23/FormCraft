@@ -306,7 +306,7 @@ export default function ResponsesPage({ params }) {
                 className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
                   dateFilter === filter.value
                     ? "bg-purple-500 text-white shadow-lg shadow-purple-500/30"
-                    : "bg-white/5 text-gray-400 hover:bg-white/10 border border-white/10"
+                    : "bg-slate-900/5 text-gray-400 hover:bg-white/10 border border-white/10"
                 }`}
               >
                 {filter.label}
