@@ -219,87 +219,178 @@ formcraft/
 
 ---
 
-## Build Priority / MVP Phases
+// ...existing code...
 
-**Phase 1 (Week 1-2)**
+# FormCraft
 
-* Landing page + Auth
-* Dashboard with form list
-* Basic form builder (5 fields)
-* Autosave system
-* Publish + share link
-
-**Phase 2 (Week 3-4)**
-
-* All field types
-* Form fill flow with auth
-* Response viewer (table + individual)
-* CSV export
-* Settings page
-
-**Phase 3 (Week 5-6)**
-
-* Analytics charts
-* Theme customization
-* Access controls
-* Loading states + animations
-* Mobile responsive
-
-**Phase 4 (Advanced)**
-
-* Conditional logic
-* File uploads
-* Templates
-* Collaboration
-* Webhooks
+FormCraft is a modern form platform for building, sharing, and analyzing forms. Built with Next.js + React, Tailwind CSS and Firebase, it focuses on fast UX, privacy-first defaults, and an extensible form builder & analytics experience.
 
 ---
 
-## Deployment
+## Quick Links
 
-* Vercel for Next.js deployment
-* Firebase for backend services
-* CI/CD with automatic builds on push
+- App layout: [app/layout.js](app/layout.js)  
+- Firebase config: [lib/firebase.js](lib/firebase.js)  
+- Auth provider: [`AuthProvider`](context/AuthContext.js)  
+- Form builder layout: [components/form-builder/FormBuilderLayout.js](components/form-builder/FormBuilderLayout.js)  
+- Field types list: [lib/constants/fieldTypes.js](lib/constants/fieldTypes.js)  
+- Form fill page: [app/f/[id]/page.js](app/f/[id]/page.js)  
+- Success flow (confetti / redirect): [components/form-fill/SuccessScreen.js](components/form-fill/SuccessScreen.js)  
+- CSV export helper: [`exportResponsesToCSV`](lib/services/responseService.js)
 
 ---
 
-## Getting Started
+## Features (high level)
 
-1. Clone the repository
+- Intuitive drag-and-drop form builder (3-column layout: palette, canvas, settings)
+- Rich field types (text, email, number, rating, scale, date/time, file uploads, choice fields)
+- Per-form settings (confirmation message, redirect URL, submission limits, access control)
+- Response viewer with individual response modal and CSV export
+- Firebase-based auth, storage, and Firestore backend
+- Theme customization & responsive UI with Tailwind CSS
+- GDPR/Privacy focused defaults and legal pages
+
+Key UI components live under `components/` (see [components](components/) folder).
+
+---
+
+## Tech Stack
+
+- Next.js (App Router)
+- React
+- Tailwind CSS
+- Firebase (Auth, Firestore, Storage)
+- Lucide icons, Recharts (analytics)
+- Optional: Framer Motion, @dnd-kit for drag & drop
+
+---
+
+## Project structure (important files)
+
+
+# FormCraft
+
+A modern, privacy-conscious form builder and analytics platform built with Next.js, React and Firebase. This README gives a quick setup guide, explains the project layout, and includes pointers for development and contribution.
+
+---
+
+## Quick links
+
+- App entry / providers: `app/layout.js`
+- Dashboard (protected): `app/(dashboard)`
+- Public form route: `app/f/[id]/page.js`
+- Firebase init: `lib/firebase.js`
+- Auth provider & hooks: `context/AuthContext.js`
+- Form builder UI: `components/form-builder/`
+
+---
+
+## Features (high level)
+
+- Visual form builder (drag & drop)
+- Publishable forms with share links and embed options
+- Response viewer, CSV export and basic analytics
+- Firebase Auth (email + Google), Firestore-backed data
+- Responsive UI with Tailwind CSS, skeletons and smooth micro-interactions
+
+---
+
+## Requirements
+
+- Node.js 18+ recommended
+- npm, yarn, or pnpm
+- A Firebase project (Auth, Firestore, Storage) for local testing
+
+---
+
+## Environment
+
+Create a .env.local or populate `lib/firebase.js` with your Firebase configuration. Common env variables used in this project:
+
+- NEXT_PUBLIC_FIREBASE_API_KEY
+- NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
+- NEXT_PUBLIC_FIREBASE_PROJECT_ID
+- NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
+- NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
+- NEXT_PUBLIC_FIREBASE_APP_ID
+
+---
+
+## Quick start (local)
+
+1. Clone and install
 
 ```bash
 git clone https://github.com/yourusername/formcraft.git
 cd formcraft
-```
-
-2. Install dependencies
-
-```bash
 npm install
 ```
 
-3. Configure Firebase
+2. Add Firebase credentials to `.env.local` or update `lib/firebase.js`.
 
-* Create a Firebase project
-* Add Firebase config in `lib/firebase.js`
-* Enable Auth, Firestore, Storage
-
-4. Run locally
+3. Start dev server
 
 ```bash
 npm run dev
 ```
 
-5. Access:
+Open http://localhost:3000
 
-* Landing: `http://localhost:3000`
-* Auth: `/auth/signin` & `/auth/signup`
-* Dashboard: `/dashboard`
-* Form builder: `/forms/new`
-* Form fill: `/f/[shortId]`
+---
+
+## Useful NPM scripts
+
+- `npm run dev` — start Next dev server
+- `npm run build` — production build
+- `npm run start` — run production build locally
+- `npm run lint` — run linters (if configured)
+
+---
+
+## Project layout (high level)
+
+```
+.
+├── app/                     # Next.js App Router routes & route groups
+├── components/              # UI components (form-builder, dashboard, responses)
+├── context/                 # Auth provider and other React context
+├── lib/                     # firebase init, services, hooks, constants
+├── public/                  # static assets
+└── README.md
+```
+
+---
+
+## Development notes
+
+- Protect dashboard routes with `AuthContext` (see `context/AuthContext.js`). The `components/ProtectedRoute.js` helper is used in the dashboard route group.
+- Field types and defaults are defined in `lib/constants/fieldTypes.js`.
+- Services (form and response logic) live in `lib/services/`.
+
+Small, low-risk suggestions you might consider adding:
+
+- Add a minimal `.env.example` with required env var names.
+- Add an `init:firebase` script or instructions to set up Firestore indexes if needed.
+
+---
+
+## Contributing
+
+1. Fork or branch from `master` with `feat/<name>` or `fix/<name>`.
+2. Open a PR with a concise description and include screenshots for UI changes.
+3. Add tests for new business logic where applicable.
 
 ---
 
 ## License
 
-MIT License
+MIT
+
+---
+
+If you'd like, I can also:
+
+- Add a `.env.example` file to the repo with the common Firebase keys shown above.
+- Wire a simple GitHub Actions workflow for linting and preview deployments.
+
+Tell me which you'd like next and I will add it.
