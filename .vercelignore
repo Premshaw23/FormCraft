@@ -1,0 +1,23 @@
+.vercelignore — files and folders to exclude from Vercel deployments
+
+# Node / editor / git
+node_modules
+.git
+.vscode
+.DS_Store
+
+# Local env files
+.env
+.env.local
+.env.*.local
+
+# Local build output (allow Vercel to build on the platform)
+.next
+.next/**
+
+# Logs / uploads
+*.log
+public/uploads
+
+# Vercel internal
+.vercel
