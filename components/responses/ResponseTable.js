@@ -202,10 +202,10 @@ const ResponseTable = ({ responses, onViewResponse, onDeleteResponse }) => {
                   </span>
                 </td>
                 <td className="px-4 py-4">
-                  <div className="flex items-center justify-end gap-2">
+                  <div className="flex items-center justify-end gap-3">
                     <button
                       onClick={() => onViewResponse(response)}
-                      className="p-2 hover:bg-white/10 rounded-lg transition-colors group"
+                      className="md:p-2 hover:bg-white/10 rounded-lg transition-colors group"
                       title="View Response"
                     >
                       <Eye className="w-4 h-4 text-gray-400 group-hover:text-purple-400" />
@@ -216,7 +216,7 @@ const ResponseTable = ({ responses, onViewResponse, onDeleteResponse }) => {
                           onDeleteResponse(response.id);
                         }
                       }}
-                      className="p-2 hover:bg-red-500/10 rounded-lg transition-colors group"
+                      className="md:p-2 hover:bg-red-500/10 rounded-lg transition-colors group"
                       title="Delete Response"
                     >
                       <Trash2 className="w-4 h-4 text-gray-400 group-hover:text-red-400" />
