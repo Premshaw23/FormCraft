@@ -279,41 +279,53 @@ export default function FormCard({
   // List View
   return (
     <>
-      <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-5 hover:bg-white/10 hover:border-purple-500/50 transition-all group">
-        <div className="flex items-center justify-between gap-4">
+      <div className="group bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-5 hover:bg-white/10 hover:border-purple-500/50 transition-all duration-300">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-5">
           {/* Left: Form Info */}
-          <div className="flex items-center gap-4 flex-1 min-w-0">
-            <div className="w-12 h-12 bg-gradient-to-br from-purple-500/20 to-pink-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
+          <div className="flex items-start gap-4 flex-1 min-w-0 w-full">
+            {/* Icon */}
+            <div className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 bg-gradient-to-br from-purple-500/20 to-pink-500/20">
               <FileText className="w-6 h-6 text-purple-400" />
             </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1">
-                <h3 className="text-lg font-semibold text-white truncate group-hover:text-purple-400 transition-colors">
+
+            {/* Text Content */}
+            <div className="flex-1 min-w-0 w-full">
+              {/* Title + Status */}
+              <div className="flex flex-wrap items-center gap-2 mb-1 w-full">
+                <h3 className="text-lg font-semibold text-white truncate group-hover:text-purple-400 transition-colors duration-200 max-w-full">
                   {form.title}
                 </h3>
-                <div
-                  className={`px-2 py-1 rounded text-xs font-medium border ${getStatusColor(
+                <span
+                  className={`px-2 py-0.5 rounded text-xs font-medium border flex-shrink-0 ${getStatusColor(
                     form.status
-                  )} flex-shrink-0`}
+                  )}`}
                 >
                   {form.status}
-                </div>
+                </span>
               </div>
-              <p className="text-gray-400 text-sm truncate mb-2">
+
+              {/* Description */}
+              <p className="text-gray-400 text-sm truncate mb-2 max-w-full">
                 {form.description || "No description"}
               </p>
-              <div className="flex items-center gap-4 text-xs text-gray-500">
+
+              {/* Meta Info */}
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-500 max-w-full">
                 <div className="flex items-center gap-1">
                   <FileText className="w-3 h-3" />
-                  <span>{form.fields?.length || 0} fields</span>
+                  <span className="truncate">
+                    {form.fields?.length || 0} fields
+                  </span>
                 </div>
                 <div className="flex items-center gap-1">
                   <BarChart3 className="w-3 h-3" />
-                  <span>{form.responseCount || 0} responses</span>
+                  <span className="truncate">
+                    {form.responseCount || 0} responses
+                  </span>
                 </div>
                 <div className="flex items-center gap-1">
                   <Clock className="w-3 h-3" />
-                  <span>
+                  <span className="truncate">
                     Updated {formatDate(form.updatedAt, "MMM d, yyyy")}
                   </span>
                 </div>
@@ -322,14 +334,15 @@ export default function FormCard({
           </div>
 
           {/* Right: Actions */}
-          <div className="flex items-center gap-2 flex-shrink-0">
+          <div className="flex items-center gap-2 self-start md:self-auto flex-wrap">
             <button
               onClick={handleEdit}
-              className="flex items-center gap-2 px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-lg transition-colors text-sm font-medium"
+              className="flex items-center gap-2 px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-lg transition-colors text-sm font-medium shadow-sm hover:shadow-purple-500/20"
             >
               <Edit className="w-4 h-4" />
               Edit
             </button>
+
             <button
               onClick={handlePreview}
               className="p-2 bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white rounded-lg transition-colors"
@@ -337,6 +350,7 @@ export default function FormCard({
             >
               <Eye className="w-4 h-4" />
             </button>
+
             {form.status === "published" && (
               <button
                 onClick={handleResponses}
@@ -346,6 +360,8 @@ export default function FormCard({
                 <BarChart3 className="w-4 h-4" />
               </button>
             )}
+
+            {/* Dropdown */}
             <div className="relative">
               <button
                 onClick={() => setMenuOpen(!menuOpen)}
@@ -361,7 +377,7 @@ export default function FormCard({
                     className="fixed inset-0 z-40"
                     onClick={() => setMenuOpen(false)}
                   />
-                  <div className="absolute right-0 mt-2 w-48 bg-slate-800/95 backdrop-blur-lg border border-white/10 rounded-lg shadow-2xl py-2 z-[999]">
+                  <div className="absolute right-0 mt-2 w-48 bg-slate-800/95 backdrop-blur-lg border border-white/10 rounded-lg shadow-2xl py-2 z-[999] animate-in fade-in slide-in-from-top-1">
                     <button
                       onClick={handleDuplicate}
                       className="w-full flex items-center gap-3 px-4 py-2 text-gray-300 hover:text-white hover:bg-white/5 transition-colors text-sm"
