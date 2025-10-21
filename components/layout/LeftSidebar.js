@@ -175,10 +175,12 @@ export default function LeftSidebar({ className = "" }) {
 
         {/* Limit Warning */}
         {currentPlan === "free" && formsCount >= maxForms && (
-          <div className="mb-4 p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
+          <div className="mb-4 p-2 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
             <p className="text-yellow-400 text-xs font-medium mb-1">
-              Form limit reached
+              Form limit reached (It is dummy warning, you can create Form from
+              Dashboard, My Form Section)
             </p>
+
             <Link
               href="/pricing"
               className="text-yellow-300 text-xs hover:underline"
