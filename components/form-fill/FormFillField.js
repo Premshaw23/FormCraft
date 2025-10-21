@@ -95,31 +95,24 @@ const FormFillField = ({ field, value, onChange, error, theme }) => {
     return <div className="mb-6">{renderField()}</div>;
   }
 
-  // For input fields, render with label and error
+  // For input fields, render with label and error (Google Forms-like)
   return (
     <div className="mb-6">
-      {/* Field Label */}
-      <label className="block mb-2">
-        <span className="text-base font-medium text-gray-200">
-          {field.label}
-          {field.required && <span className="text-red-400 ml-1">*</span>}
-        </span>
-        {field.helpText && (
-          <span className="block text-sm text-gray-400 mt-1">
-            {field.helpText}
-          </span>
-        )}
-      </label>
+      <div className="mb-2">
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="text-slate-900 font-medium text-base">{field.label}{field.required && <span className="text-red-500 ml-1">*</span>}</div>
+            {field.helpText && <div className="text-sm text-slate-500 mt-1">{field.helpText}</div>}
+          </div>
+        </div>
+      </div>
 
       {/* Field Input */}
-      {renderField()}
+      <div>{renderField()}</div>
 
       {/* Error Message */}
       {error && (
-        <p className="mt-2 text-sm text-red-400 flex items-center gap-1">
-          <span className="inline-block w-1 h-1 bg-red-400 rounded-full"></span>
-          {error}
-        </p>
+        <p className="mt-2 text-sm text-red-600 flex items-center gap-1">{error}</p>
       )}
     </div>
   );
@@ -154,9 +147,7 @@ const ShortTextInput = ({ field, value, onChange }) => (
     value={value || ""}
     onChange={(e) => onChange(e.target.value)}
     placeholder={field.placeholder}
-    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg 
-               focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent
-               text-white placeholder-gray-500 transition-all"
+    className="w-full px-0 py-2 border-0 border-b-2 border-slate-200 focus:border-slate-400 focus:outline-none text-slate-900 placeholder-slate-400"
     maxLength={field.validation?.maxLength}
   />
 );
@@ -167,54 +158,46 @@ const LongTextInput = ({ field, value, onChange }) => (
     onChange={(e) => onChange(e.target.value)}
     placeholder={field.placeholder}
     rows={4}
-    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg 
-               focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent
-               text-white placeholder-gray-500 transition-all resize-none"
+    className="w-full px-0 py-2 border-0 border-b-2 border-slate-200 focus:border-slate-400 focus:outline-none text-slate-900 placeholder-slate-400 resize-none"
     maxLength={field.validation?.maxLength}
   />
 );
 
 const EmailInput = ({ field, value, onChange }) => (
   <div className="relative">
-    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+    <Mail className="absolute left-0 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
     <input
       type="email"
       value={value || ""}
       onChange={(e) => onChange(e.target.value)}
       placeholder={field.placeholder || "email@example.com"}
-      className="w-full pl-11 pr-4 py-3 bg-white/5 border border-white/10 rounded-lg 
-                 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent
-                 text-white placeholder-gray-500 transition-all"
+      className="w-full pl-6 py-2 border-0 border-b-2 border-slate-200 focus:border-slate-400 focus:outline-none text-slate-900 placeholder-slate-400"
     />
   </div>
 );
 
 const PhoneInput = ({ field, value, onChange }) => (
   <div className="relative">
-    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+    <Phone className="absolute left-0 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
     <input
       type="tel"
       value={value || ""}
       onChange={(e) => onChange(e.target.value)}
       placeholder={field.placeholder || "+1 (555) 123-4567"}
-      className="w-full pl-11 pr-4 py-3 bg-white/5 border border-white/10 rounded-lg 
-                 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent
-                 text-white placeholder-gray-500 transition-all"
+      className="w-full pl-6 py-2 border-0 border-b-2 border-slate-200 focus:border-slate-400 focus:outline-none text-slate-900 placeholder-slate-400"
     />
   </div>
 );
 
 const URLInput = ({ field, value, onChange }) => (
   <div className="relative">
-    <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+    <LinkIcon className="absolute left-0 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
     <input
       type="url"
       value={value || ""}
       onChange={(e) => onChange(e.target.value)}
       placeholder={field.placeholder || "https://example.com"}
-      className="w-full pl-11 pr-4 py-3 bg-white/5 border border-white/10 rounded-lg 
-                 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent
-                 text-white placeholder-gray-500 transition-all"
+      className="w-full pl-6 py-2 border-0 border-b-2 border-slate-200 focus:border-slate-400 focus:outline-none text-slate-900 placeholder-slate-400"
     />
   </div>
 );
@@ -227,9 +210,7 @@ const NumberInput = ({ field, value, onChange }) => (
     placeholder={field.placeholder}
     min={field.validation?.min}
     max={field.validation?.max}
-    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg 
-               focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent
-               text-white placeholder-gray-500 transition-all"
+    className="w-full px-0 py-2 border-0 border-b-2 border-slate-200 focus:border-slate-400 focus:outline-none text-slate-900 placeholder-slate-400"
   />
 );
 
@@ -237,28 +218,24 @@ const NumberInput = ({ field, value, onChange }) => (
 
 const DateInput = ({ field, value, onChange }) => (
   <div className="relative">
-    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+    <Calendar className="absolute left-0 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
     <input
       type="date"
       value={value || ""}
       onChange={(e) => onChange(e.target.value)}
-      className="w-full pl-11 pr-4 py-3 bg-white/5 border border-white/10 rounded-lg 
-                 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent
-                 text-white transition-all"
+      className="w-full pl-6 py-2 border-0 border-b-2 border-slate-200 focus:border-slate-400 focus:outline-none text-slate-900"
     />
   </div>
 );
 
 const TimeInput = ({ field, value, onChange }) => (
   <div className="relative">
-    <Clock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+    <Clock className="absolute left-0 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
     <input
       type="time"
       value={value || ""}
       onChange={(e) => onChange(e.target.value)}
-      className="w-full pl-11 pr-4 py-3 bg-white/5 border border-white/10 rounded-lg 
-                 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent
-                 text-white transition-all"
+      className="w-full pl-6 py-2 border-0 border-b-2 border-slate-200 focus:border-slate-400 focus:outline-none text-slate-900"
     />
   </div>
 );
@@ -266,26 +243,24 @@ const TimeInput = ({ field, value, onChange }) => (
 // ===== CHOICE FIELDS =====
 
 const MultipleChoice = ({ field, value, onChange }) => (
-  <div className="space-y-3">
-    {field.options?.map((option, idx) => (
-      <label
-        key={idx}
-        className="flex items-center gap-3 p-3 bg-white/5 border border-white/10 rounded-lg 
-                   hover:bg-white/10 cursor-pointer transition-all group"
-      >
-        <input
-          type="radio"
-          name={field.id}
-          value={option}
-          checked={value === option}
-          onChange={(e) => onChange(e.target.value)}
-          className="w-4 h-4 text-purple-500 focus:ring-purple-500 focus:ring-offset-0"
-        />
-        <span className="text-gray-200 group-hover:text-white transition-colors">
-          {option}
-        </span>
-      </label>
-    ))}
+  <div className="space-y-2">
+    {field.options?.map((option, idx) => {
+      const id = `radio-${field.id}-${idx}`;
+      return (
+        <div key={option} className="flex items-center gap-3 py-2">
+          <input
+            id={id}
+            type="radio"
+            name={field.id}
+            value={option}
+            checked={value === option}
+            onChange={(e) => onChange(e.target.value)}
+            className="w-4 h-4 text-slate-700"
+          />
+          <label htmlFor={id} className="flex-1 text-slate-800 cursor-pointer">{option}</label>
+        </div>
+      );
+    })}
   </div>
 );
 
@@ -300,24 +275,22 @@ const Checkboxes = ({ field, value, onChange }) => {
   };
 
   return (
-    <div className="space-y-3">
-      {field.options?.map((option, idx) => (
-        <label
-          key={idx}
-          className="flex items-center gap-3 p-3 bg-white/5 border border-white/10 rounded-lg 
-                     hover:bg-white/10 cursor-pointer transition-all group"
-        >
-          <input
-            type="checkbox"
-            checked={selectedValues.includes(option)}
-            onChange={() => handleToggle(option)}
-            className="w-4 h-4 text-purple-500 rounded focus:ring-purple-500 focus:ring-offset-0"
-          />
-          <span className="text-gray-200 group-hover:text-white transition-colors">
-            {option}
-          </span>
-        </label>
-      ))}
+    <div className="space-y-2">
+      {field.options?.map((option, idx) => {
+        const id = `chk-${field.id}-${idx}`;
+        return (
+          <div key={option} className="flex items-center gap-3 py-2">
+            <input
+              id={id}
+              type="checkbox"
+              checked={selectedValues.includes(option)}
+              onChange={() => handleToggle(option)}
+              className="w-4 h-4"
+            />
+            <label htmlFor={id} className="flex-1 text-slate-800 cursor-pointer">{option}</label>
+          </div>
+        );
+      })}
     </div>
   );
 };
@@ -325,22 +298,18 @@ const Checkboxes = ({ field, value, onChange }) => {
 const Dropdown = ({ field, value, onChange }) => (
   <div className="relative">
     <select
+      aria-label={field.label}
       value={value || ""}
       onChange={(e) => onChange(e.target.value)}
-      className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg 
-                 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent
-                 text-white appearance-none cursor-pointer transition-all"
+      className="w-full px-0 py-2 border-0 border-b-2 border-slate-200 focus:border-slate-400 focus:outline-none text-slate-900"
     >
-      <option value="" className="bg-slate-800">
-        Select an option...
-      </option>
-      {field.options?.map((option, idx) => (
-        <option key={idx} value={option} className="bg-slate-800">
+      <option value="">{field.placeholder || "Select an option..."}</option>
+      {field.options?.map((option) => (
+        <option key={option} value={option}>
           {option}
         </option>
       ))}
     </select>
-    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
   </div>
 );
 
@@ -350,23 +319,22 @@ const Rating = ({ field, value, onChange }) => {
   const maxRating = field.validation?.max || 5;
 
   return (
-    <div className="flex gap-2">
-      {[...Array(maxRating)].map((_, idx) => (
-        <button
-          key={idx}
-          type="button"
-          onClick={() => onChange(idx + 1)}
-          className="transition-all hover:scale-110"
-        >
-          <Star
-            className={`w-8 h-8 ${
-              value && idx < value
-                ? "fill-yellow-400 text-yellow-400"
-                : "text-gray-600 hover:text-yellow-400"
-            }`}
-          />
-        </button>
-      ))}
+    <div className="flex gap-2" role="radiogroup" aria-label={field.label}>
+      {[...Array(maxRating)].map((_, idx) => {
+        const filled = value && idx < value;
+        return (
+          <button
+            key={idx}
+            type="button"
+            aria-pressed={filled}
+            aria-label={`${idx + 1} star${idx > 0 ? "s" : ""}`}
+            onClick={() => onChange(idx + 1)}
+            className={`text-xl ${filled ? "text-yellow-400" : "text-slate-400 hover:text-yellow-400"}`}
+          >
+            ★
+          </button>
+        );
+      })}
     </div>
   );
 };
@@ -405,13 +373,12 @@ const FileUpload = ({ field, value, onChange }) => {
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      // For now, just store file name. You'll need Firebase Storage for actual uploads
       onChange(file.name);
     }
   };
 
   return (
-    <div className="relative">
+    <div>
       <input
         type="file"
         onChange={handleFileChange}
@@ -419,16 +386,8 @@ const FileUpload = ({ field, value, onChange }) => {
         className="hidden"
         id={`file-${field.id}`}
       />
-      <label
-        htmlFor={`file-${field.id}`}
-        className="flex items-center justify-center gap-3 px-4 py-6 bg-white/5 
-                   border-2 border-dashed border-white/20 rounded-lg hover:bg-white/10 
-                   hover:border-purple-500 cursor-pointer transition-all group"
-      >
-        <Upload className="w-5 h-5 text-gray-400 group-hover:text-purple-400" />
-        <span className="text-gray-400 group-hover:text-white">
-          {value || "Click to upload file"}
-        </span>
+      <label htmlFor={`file-${field.id}`} className="inline-block text-slate-700 underline cursor-pointer">
+        {value ? `File selected: ${value}` : "Upload a file"}
       </label>
     </div>
   );

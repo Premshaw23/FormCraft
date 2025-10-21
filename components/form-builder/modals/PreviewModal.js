@@ -16,9 +16,9 @@ export default function PreviewModal({ form, onClose }) {
 
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-slate-900 rounded-2xl w-full h-full max-h-[90vh] flex flex-col border border-white/10">
+      <div className="bg-transparent rounded-2xl w-full h-full max-h-[90vh] flex flex-col">
         {/* Modal Header */}
-        <div className="p-4 md:p-6 border-b border-white/10 flex items-center justify-between">
+        <div className="p-4 md:p-6 flex items-center justify-between">
           <div>
             <h2 className="text-2xl md:text-3xl font-bold text-white">Form Preview</h2>
             <p className="text-slate-400 text-sm md:text-sm mt-1">
@@ -59,7 +59,7 @@ export default function PreviewModal({ form, onClose }) {
         </div>
 
         {/* Preview Content */}
-        <div className="flex-1 overflow-y-auto bg-slate-800/50 p-4 md:p-8">
+        <div className="flex-1 overflow-y-auto p-4 md:p-8">
           <div className="mx-auto transition-all duration-300 max-w-full scroll-x-auto">
             <div
               className="mx-auto transition-all duration-300 max-w-full"
@@ -68,64 +68,71 @@ export default function PreviewModal({ form, onClose }) {
                 maxWidth: "100%",
               }}
             >
-            {/* Form Preview Card */}
-            <div
-              className="rounded-2xl shadow-2xl overflow-hidden"
-              style={{
-                backgroundColor: form.theme?.backgroundColor || "#ffffff",
-                fontFamily: form.theme?.fontFamily || "Inter",
-              }}
-            >
-              {/* Form Header */}
+              {/* Form Preview Card (premium style) */}
               <div
-                className="p-8 border-b"
+                className="rounded-2xl shadow-2xl overflow-hidden border border-white/10"
                 style={{
-                  borderColor: `${form.theme?.primaryColor || "#8b5cf6"}20`,
+                  background: `linear-gradient(135deg, ${form.theme?.backgroundColor || "#0f172a"} 0%, ${form.theme?.primaryColor || "#8b5cf6"}10 50%, ${form.theme?.secondaryColor || "#ec4899"}10 100%)`,
+                  fontFamily: form.theme?.fontFamily || "Inter, system-ui, sans-serif",
                 }}
               >
-                <h1
-                  className="text-3xl font-bold mb-3"
+                {/* Premium Header */}
+                <div
+                  className="p-8 border-b relative"
                   style={{
-                    color: form.theme?.primaryColor || "#8b5cf6",
+                    borderColor: `${form.theme?.primaryColor || "#8b5cf6"}30`,
                   }}
                 >
-                  {form.title || "Untitled Form"}
-                </h1>
-                {form.description && (
-                  <p className="text-gray-600 text-lg">{form.description}</p>
-                )}
-              </div>
-
-              {/* Form Fields */}
-              <div className="p-4 md:p-8 space-y-6">
-                {form.fields.length > 0 ? (
-                  form.fields.map((field) => (
-                    <div key={field.id}>
-                      <FormFieldPreview field={field} theme={form.theme} />
-                    </div>
-                  ))
-                ) : (
-                  <div className="text-center py-12 text-gray-400">
-                    <p>No fields added yet</p>
-                  </div>
-                )}
-
-                {/* Submit Button */}
-                {form.fields.length > 0 && (
-                  <button
-                    className="w-full py-3 px-6 rounded-lg text-white font-semibold text-lg transition-all hover:opacity-90"
+                  <div
+                    className="absolute top-0 right-0 w-40 h-40 rounded-full blur-3xl opacity-20"
+                    style={{ background: form.theme?.primaryColor || "#8b5cf6" }}
+                  />
+                  <h1
+                    className="text-3xl font-bold mb-3"
                     style={{
-                      backgroundColor: form.theme?.primaryColor || "#8b5cf6",
+                      background: `linear-gradient(135deg, ${form.theme?.primaryColor || "#8b5cf6"}, ${form.theme?.secondaryColor || "#ec4899"})`,
+                      WebkitBackgroundClip: "text",
+                      WebkitTextFillColor: "transparent",
+                      backgroundClip: "text",
                     }}
-                    disabled
                   >
-                    {form.settings?.submitButtonText || "Submit"}
-                  </button>
-                )}
+                    {form.title || "Untitled Form"}
+                  </h1>
+                  {form.description && (
+                    <p className="text-slate-200 text-lg">{form.description}</p>
+                  )}
+                </div>
+
+                {/* Form Fields */}
+                <div className="p-6 md:p-8 space-y-6">
+                  {form.fields.length > 0 ? (
+                    form.fields.map((field) => (
+                      <div key={field.id}>
+                        <FormFieldPreview field={field} theme={form.theme} />
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-12 text-slate-400">
+                      <p>No fields added yet</p>
+                    </div>
+                  )}
+
+                  {/* Submit Button */}
+                  {form.fields.length > 0 && (
+                    <button
+                      className="w-full py-4 px-6 rounded-2xl text-white font-semibold text-lg transition-all disabled:opacity-60"
+                      style={{
+                        background: `linear-gradient(135deg, ${form.theme?.primaryColor || "#8b5cf6"}, ${form.theme?.secondaryColor || "#ec4899"})`,
+                      }}
+                      disabled
+                    >
+                      {form.settings?.submitButtonText || "Submit"}
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           </div>
-        </div>
         </div>
       </div>
     </div>

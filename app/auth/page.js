@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   Mail,
   Lock,
@@ -29,6 +29,8 @@ import { doc, setDoc, getDoc } from "firebase/firestore"; // Add getDoc
 
 export default function AuthPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams?.get("redirect") || "/dashboard";
   const { user } = useAuth();
   const [isSignUp, setIsSignUp] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -49,7 +51,7 @@ export default function AuthPage() {
   // Redirect if already logged in
   useEffect(() => {
     if (user) {
-      router.push("/dashboard");
+      router.push(redirectTo);
     }
   }, [user, router]);
 
@@ -145,9 +147,9 @@ export default function AuthPage() {
           "Account created! Please check your email to verify your account."
         );
 
-        // Redirect after 3 seconds
+        // Redirect after 3 seconds (respect optional redirect query param)
         setTimeout(() => {
-          router.push("/dashboard");
+          router.push(redirectTo);
         }, 3000);
       } else {
         // Sign In
@@ -157,7 +159,7 @@ export default function AuthPage() {
           formData.password
         );
 
-        router.push("/dashboard");
+  router.push(redirectTo);
       }
     } catch (err) {
       console.error("Auth error:", err);
@@ -223,7 +225,7 @@ export default function AuthPage() {
         });
       }
 
-      router.push("/dashboard");
+  router.push(redirectTo);
     } catch (err) {
       console.error("Google sign in error:", err);
 

@@ -38,6 +38,8 @@ const SuccessScreen = ({
     <div
       className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900/20 to-slate-900 
                     flex items-center justify-center p-6 relative overflow-hidden"
+      role="status"
+      aria-live="polite"
     >
       {/* Animated Background */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -67,20 +69,19 @@ const SuccessScreen = ({
 
       {/* Success Card */}
       <div
-        className="relative max-w-md w-full bg-slate-800/50 backdrop-blur-xl border border-white/10 
+        className="relative max-w-md w-full bg-slate-800/60 backdrop-blur-xl border border-white/10 
                       rounded-2xl shadow-2xl p-8 text-center animate-scale-in"
+        role="dialog"
+        aria-label="Success"
       >
         {/* Success Icon */}
-        <div
-          className="mx-auto w-20 h-20 bg-gradient-to-br from-green-400 to-emerald-500 
-                        rounded-full flex items-center justify-center mb-6 animate-bounce-in"
-        >
-          <CheckCircle className="w-12 h-12 text-white" />
+        <div className="mx-auto w-20 h-20 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center mb-6 animate-bounce-in">
+          <CheckCircle className="w-12 h-12 text-white" aria-hidden="true" />
         </div>
 
         {/* Success Message */}
-        <h2 className="text-3xl font-bold text-white mb-3">Form Submitted!</h2>
-        <p className="text-lg text-gray-300 mb-8">{message}</p>
+  <h2 className="text-3xl font-bold text-white mb-3">Form Submitted!</h2>
+  <p className="text-lg text-gray-300 mb-6">{message}</p>
 
         {/* Redirect Countdown */}
         {redirectUrl && countdown > 0 && (
@@ -96,9 +97,8 @@ const SuccessScreen = ({
           {allowMultiple && onSubmitAnother && (
             <button
               onClick={onSubmitAnother}
-              className="w-full px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 
-                         text-white font-semibold rounded-lg hover:scale-105 
-                         transition-all shadow-lg hover:shadow-purple-500/50"
+              className="w-full px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold rounded-lg hover:opacity-95 transition-all shadow-lg"
+              aria-label="Submit another response"
             >
               Submit Another Response
             </button>
@@ -106,11 +106,10 @@ const SuccessScreen = ({
 
           <button
             onClick={() => router.push("/dashboard")}
-            className="w-full px-6 py-3 bg-white/5 border border-white/10 text-gray-300 
-                       font-semibold rounded-lg hover:bg-white/10 hover:border-purple-500 
-                       transition-all flex items-center justify-center gap-2"
+            className="w-full px-6 py-3 bg-white/6 border border-white/10 text-gray-200 font-semibold rounded-lg hover:bg-white/10 transition-all flex items-center justify-center gap-2"
+            aria-label="Go to dashboard"
           >
-            <Home className="w-4 h-4" />
+            <Home className="w-4 h-4" aria-hidden="true" />
             Go to Dashboard
           </button>
         </div>

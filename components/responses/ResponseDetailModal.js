@@ -290,8 +290,26 @@ const ResponseDetailModal = ({
                 Responses
               </h3>
 
-              {Object.entries(response.answers || {}).map(
-                ([fieldId, value]) => {
+              {(() => {
+                const layoutTypes = ['section_heading', 'divider', 'description_text'];
+
+                // Build entries but skip layout-only fields
+                const answerEntries = Object.entries(response.answers || {}).filter(
+                  ([fieldId, value]) => {
+                    const fieldType = getFieldType(fieldId);
+                    return !layoutTypes.includes(fieldType);
+                  }
+                );
+
+                if (answerEntries.length === 0) {
+                  return (
+                    <p className="text-gray-500 text-center py-8">
+                      No answers recorded
+                    </p>
+                  );
+                }
+
+                return answerEntries.map(([fieldId, value]) => {
                   const label = getFieldLabel(fieldId);
 
                   return (
@@ -305,14 +323,8 @@ const ResponseDetailModal = ({
                       {formatAnswer(fieldId, value)}
                     </div>
                   );
-                }
-              )}
-
-              {Object.keys(response.answers || {}).length === 0 && (
-                <p className="text-gray-500 text-center py-8">
-                  No answers recorded
-                </p>
-              )}
+                });
+              })()}
             </div>
           </div>
         </div>
