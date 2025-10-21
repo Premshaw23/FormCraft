@@ -515,7 +515,7 @@ export default function LandingPage() {
       </section>
 
       {/* contact Section */}
-      <section id="contact" className="pt-20 px-4 sm:px-6 lg:px-8 relative">
+      <section id="contact" className="pb-20 px-4 sm:px-6 lg:px-8 relative">
         <div className="max-w-4xl mx-auto text-center">
           <div className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-full border border-purple-500/30 backdrop-blur-sm mb-6">
             <MessageCircle className="w-5 h-5 text-purple-300 mr-2" />
