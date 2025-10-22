@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import {
   Mail,
   Lock,
@@ -24,14 +24,12 @@ import {
   updateProfile,
 } from "firebase/auth";
 import { auth, db } from "@/lib/firebase";
-import { doc, setDoc, getDoc } from "firebase/firestore"; // Add getDoc
-
+import { doc, setDoc, getDoc } from "firebase/firestore";
 
 export default function AuthPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const redirectTo = searchParams?.get("redirect") || "/dashboard";
   const { user } = useAuth();
+  const [redirectTo, setRedirectTo] = useState("/dashboard");
   const [isSignUp, setIsSignUp] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -48,12 +46,21 @@ export default function AuthPage() {
     agreeToTerms: false,
   });
 
+  // Get redirect parameter from URL on mount
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const redirect = params.get("redirect");
+    if (redirect) {
+      setRedirectTo(redirect);
+    }
+  }, []);
+
   // Redirect if already logged in
   useEffect(() => {
     if (user) {
       router.push(redirectTo);
     }
-  }, [user, router]);
+  }, [user, router, redirectTo]);
 
   // Password strength checker
   const getPasswordStrength = (password) => {
@@ -159,7 +166,7 @@ export default function AuthPage() {
           formData.password
         );
 
-  router.push(redirectTo);
+        router.push(redirectTo);
       }
     } catch (err) {
       console.error("Auth error:", err);
@@ -225,7 +232,7 @@ export default function AuthPage() {
         });
       }
 
-  router.push(redirectTo);
+      router.push(redirectTo);
     } catch (err) {
       console.error("Google sign in error:", err);
 
@@ -242,7 +249,6 @@ export default function AuthPage() {
       setLoading(false);
     }
   };
-
 
   const handleForgotPassword = async (e) => {
     e.preventDefault();
