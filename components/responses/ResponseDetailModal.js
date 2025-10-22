@@ -1,4 +1,4 @@
-// components/responses/ResponseDetailModal.jsx - FIXED DATE ISSUE
+// components/responses/ResponseDetailModal.jsx - FIXED FILE DISPLAY
 "use client";
 import React from "react";
 import {
@@ -11,6 +11,9 @@ import {
   ChevronRight,
   Download,
   Trash2,
+  ExternalLink,
+  FileText,
+  Image as ImageIcon,
 } from "lucide-react";
 import { format, parseISO, isValid } from "date-fns";
 
@@ -129,12 +132,124 @@ const ResponseDetailModal = ({
       );
     }
 
-    // Handle file upload
-    if (fieldType === "file-upload") {
+    // Handle file upload - IMPROVED VERSION
+    if (fieldType === "file_upload" || fieldType === "file-upload") {
+      if (typeof value === "object" && value.url) {
+        const isImage = value.fileType?.startsWith("image/");
+        const isPDF = value.fileType === "application/pdf";
+        
+        return (
+          <div className="space-y-4">
+            {/* File Info Card */}
+            <div className="flex items-center gap-4 p-4 bg-slate-800 rounded-lg border border-white/10">
+              <div className="w-12 h-12 rounded-lg bg-blue-500/20 flex items-center justify-center flex-shrink-0">
+                {isImage ? (
+                  <ImageIcon className="w-6 h-6 text-blue-400" />
+                ) : (
+                  <FileText className="w-6 h-6 text-blue-400" />
+                )}
+              </div>
+
+              <div className="flex-1 min-w-0">
+                <p className="text-white font-medium truncate">
+                  {value.fileName}
+                </p>
+                <p className="text-sm text-gray-400">
+                  {(value.fileSize / 1024).toFixed(2)} KB
+                </p>
+              </div>
+
+              <div className="flex gap-2">
+                {/* Download Button */}
+                <a
+                  href={value.url}
+                  download={value.fileName}
+                  className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg 
+                       transition-colors text-sm font-medium flex items-center gap-2"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <Download className="w-4 h-4" />
+                  Download
+                </a>
+
+                {/* Open in New Tab Button */}
+                <a
+                  href={value.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg 
+                       transition-colors text-sm font-medium flex items-center gap-2"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <ExternalLink className="w-4 h-4" />
+                  Open
+                </a>
+              </div>
+            </div>
+
+            {/* Image Preview */}
+            {isImage && (
+              <div className="rounded-lg overflow-hidden border border-white/10 bg-slate-800/50">
+                <img
+                  src={value.thumbnailUrl || value.url}
+                  alt={value.fileName}
+                  className="w-full h-auto max-h-96 object-contain cursor-pointer hover:opacity-90 transition-opacity"
+                  onClick={() => window.open(value.url, "_blank")}
+                  onError={(e) => {
+                    // Fallback to full URL if thumbnail fails
+                    if (e.target.src !== value.url) {
+                      e.target.src = value.url;
+                    }
+                  }}
+                />
+                <div className="p-3 bg-slate-900/50 text-center">
+                  <p className="text-xs text-gray-400">
+                    Click image to view full size
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* PDF Preview with Iframe */}
+            {isPDF && (
+              <div className="space-y-3">
+                <div className="rounded-lg overflow-hidden border border-white/10 bg-slate-800/50">
+                  <iframe
+                    src={value.url}
+                    className="w-full h-[600px] bg-white"
+                    title={`PDF Preview - ${value.fileName}`}
+                  />
+                  <div className="p-3 bg-slate-900/50 text-center">
+                    <p className="text-xs text-gray-400">
+                      PDF Preview - Use controls above to navigate
+                    </p>
+                  </div>
+                </div>
+
+                <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+                  <p className="text-xs text-gray-400 mb-2">Direct link:</p>
+                  <input
+                    type="text"
+                    value={value.url}
+                    readOnly
+                    onClick={(e) => e.target.select()}
+                    className="w-full px-3 py-2 bg-slate-900 text-gray-300 rounded text-xs font-mono border border-white/10"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      }
+
+      // Fallback for old format or File objects
       return (
-        <div className="flex items-center gap-2 text-blue-400">
-          <Download className="w-4 h-4" />
-          {typeof value === "object" ? value.name : value}
+        <div className="flex items-center gap-2 text-blue-400 p-4 bg-slate-800 rounded-lg border border-white/10">
+          <FileText className="w-5 h-5" />
+          <span className="font-medium">
+            {typeof value === "object" ? value.name || "Unknown file" : value}
+          </span>
+          <span className="text-sm text-gray-400 ml-2">(Legacy format)</span>
         </div>
       );
     }

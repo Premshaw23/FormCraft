@@ -245,17 +245,42 @@ export default function FormFillPage({ params }) {
     setSubmitting(true);
 
     try {
-      await submitResponse(formId, user?.uid || "anonymous", formData, {
-        userEmail: user?.email || null,
-        userName: user?.displayName || "Anonymous",
-        formTitle: form.title,
-      });
+      // Show upload progress toast for files
+      const hasFiles = Object.values(formData).some((v) => v instanceof File);
+
+      if (hasFiles) {
+        toast.loading("Uploading files...", { id: "upload-progress" });
+      }
+
+      await submitResponse(
+        formId,
+        user?.uid || "anonymous",
+        formData,
+        {
+          userEmail: user?.email || null,
+          userName: user?.displayName || "Anonymous",
+          formTitle: form.title,
+        },
+        (fieldId, progress) => {
+          // Update upload progress
+          toast.loading(`Uploading: ${Math.round(progress)}%`, {
+            id: "upload-progress",
+          });
+        }
+      );
+
+      if (hasFiles) {
+        toast.success("Files uploaded!", { id: "upload-progress" });
+      }
 
       setSubmitted(true);
       toast.success("Response submitted successfully! 🎉");
     } catch (error) {
       console.error("Error submitting response:", error);
-      toast.error("Failed to submit response. Please try again.");
+      toast.error(
+        error.message || "Failed to submit response. Please try again."
+      );
+      toast.dismiss("upload-progress");
     } finally {
       setSubmitting(false);
     }

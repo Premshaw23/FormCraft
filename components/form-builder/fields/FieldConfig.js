@@ -264,13 +264,18 @@ export default function FieldConfig({ field, onUpdate, onClose }) {
             <input
               type="number"
               value={field.maxSize || 10}
-              onChange={(e) =>
-                onUpdate({ maxSize: parseInt(e.target.value) || 10 })
-              }
+              onChange={(e) => {
+                // Ensure value does not exceed 10
+                const value = Math.min(parseInt(e.target.value) || 10, 10);
+                onUpdate({ maxSize: value });
+              }}
               min="1"
-              max="100"
+              max="10" // limit input to 10
               className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
             />
+            <p className="text-xs text-gray-400 mt-1">
+              Max allowed size is 10MB due to Cloudinary free tier.
+            </p>
           </div>
         </>
       )}
