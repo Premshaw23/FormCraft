@@ -3,6 +3,7 @@
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import ProtectedRoute from "@/components/ProtectedRoute";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 
 export default function DashboardLayoutWrapper({ children }) {
@@ -34,5 +35,9 @@ export default function DashboardLayoutWrapper({ children }) {
   }
 
   // Render dashboard layout with children
-  return <DashboardLayout>{children}</DashboardLayout>;
+  return (
+    <ProtectedRoute>
+      <DashboardLayout>{children}</DashboardLayout>
+    </ProtectedRoute>
+  );
 }

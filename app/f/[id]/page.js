@@ -14,6 +14,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import toast from "react-hot-toast";
+import ProtectedRoute from "@/components/ProtectedRoute";
 
 export default function FormFillPage({ params }) {
   const unwrappedParams = use(params);
@@ -420,6 +421,8 @@ export default function FormFillPage({ params }) {
   }
 
   return (
+    <ProtectedRoute>
+
     <div
       className="min-h-screen py-8 sm:py-16 px-4"
       style={{
@@ -501,13 +504,13 @@ export default function FormFillPage({ params }) {
                   <div
                     className="w-2 h-2 rounded-full animate-pulse"
                     style={{ background: primaryColor }}
-                  />
+                    />
                   <span className="text-sm text-slate-200">
                     Responding as{" "}
                     <strong
                       className="font-semibold"
                       style={{ color: primaryColor }}
-                    >
+                      >
                       {user.email}
                     </strong>
                   </span>
@@ -535,7 +538,7 @@ export default function FormFillPage({ params }) {
                   }
                   primaryColor={primaryColor}
                   secondaryColor={secondaryColor}
-                />
+                  />
               </div>
             ))}
 
@@ -577,6 +580,7 @@ export default function FormFillPage({ params }) {
         </div>
       </div>
     </div>
+</ProtectedRoute>
   );
 }
 
@@ -592,38 +596,38 @@ function FormField({
   if (field.type === "section_heading") {
     return (
       <div className="pt-6 pb-4">
-        <div className="flex items-center gap-4 mb-3">
-          <div
-            className="w-1 h-12 rounded-full"
-            style={{
+      <div className="flex items-center gap-4 mb-3">
+      <div
+      className="w-1 h-12 rounded-full"
+      style={{
               background: `linear-gradient(180deg, ${primaryColor}, ${secondaryColor})`,
             }}
-          />
-          <h3 className="text-3xl font-bold text-white">
+            />
+            <h3 className="text-3xl font-bold text-white">
             {field.text || "Section Heading"}
-          </h3>
-        </div>
-        {field.description && (
-          <p
-            className="text-slate-300 text-lg ml-5 pl-4 border-l-2"
-            style={{ borderColor: `${primaryColor}40` }}
+            </h3>
+            </div>
+            {field.description && (
+              <p
+              className="text-slate-300 text-lg ml-5 pl-4 border-l-2"
+              style={{ borderColor: `${primaryColor}40` }}
           >
             {field.description}
-          </p>
-        )}
+            </p>
+          )}
       </div>
     );
   }
-
+  
   if (field.type === "divider") {
     return (
       <div className="relative py-6">
-        <div
-          className="h-px w-full"
-          style={{
-            background: `linear-gradient(90deg, transparent, ${primaryColor}60, transparent)`,
-          }}
-        />
+      <div
+      className="h-px w-full"
+      style={{
+        background: `linear-gradient(90deg, transparent, ${primaryColor}60, transparent)`,
+      }}
+      />
       </div>
     );
   }
