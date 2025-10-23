@@ -33,7 +33,7 @@ export default function FormEditPage({ params }) {
       }
 
       try {
-        console.log("Loading form:", formId, "for user:", user.uid);
+        // console.log("Loading form:", formId, "for user:", user.uid);
         const formData = await getFormById(formId);
 
         if (!formData) {
@@ -55,7 +55,7 @@ export default function FormEditPage({ params }) {
           return;
         }
 
-        console.log("Form loaded successfully:", formData);
+        // console.log("Form loaded successfully:", formData);
         setForm(formData);
       } catch (error) {
         console.error("Error loading form:", error);

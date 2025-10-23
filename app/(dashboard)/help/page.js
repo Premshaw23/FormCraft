@@ -16,7 +16,10 @@ import {
   ExternalLink,
   Send,
 } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
+import emailjs from "@emailjs/browser";
+
 
 export default function HelpPage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -24,6 +27,9 @@ export default function HelpPage() {
     subject: "",
     message: "",
   });
+   const { user, loading, signOut } = useAuth();
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [submitStatus, setSubmitStatus] = useState(null);
 
   // Help categories
   const categories = [
@@ -142,13 +148,39 @@ export default function HelpPage() {
     { title: "Custom form themes guide", views: "543", time: "8 min" },
   ];
 
-  const handleContactSubmit = (e) => {
-    e.preventDefault();
-    // Handle contact form submission
-    console.log("Contact form:", contactForm);
-    alert("Message sent! We'll get back to you soon.");
-    setContactForm({ subject: "", message: "" });
-  };
+ const handleContactSubmit = async (e) => {
+   e.preventDefault();
+   setIsSubmitting(true);
+   setSubmitStatus(null);
+
+   try {
+     await emailjs.send(
+       process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID,
+       process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID,
+       {
+         subject: contactForm.subject,
+         message: contactForm.message,
+         email: user?.email || "anonymous@formcraft.app",
+         name: user?.displayName || "Anonymous User",
+       },
+       process.env.NEXT_PUBLIC_EMAILJS_USER_ID
+     );
+
+     setSubmitStatus({
+       type: "success",
+       message: "Thank you! Your message has been sent successfully.",
+     });
+     setContactForm({ subject: "", message: "" });
+   } catch (error) {
+     console.error("EmailJS Error:", error);
+     setSubmitStatus({
+       type: "error",
+       message: "Sorry, something went wrong. Please try again later.",
+     });
+   } finally {
+     setIsSubmitting(false);
+   }
+ };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900/20 to-slate-900 p-6">
@@ -340,12 +372,24 @@ export default function HelpPage() {
                 </div>
                 <button
                   type="submit"
-                  className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:shadow-lg hover:shadow-purple-500/50 transition-all font-semibold"
+                  disabled={isSubmitting}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:shadow-lg hover:shadow-purple-500/50 transition-all font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Send className="w-5 h-5" />
-                  Send Message
+                  {isSubmitting ? "Sending..." : "Send Message"}
                 </button>
               </form>
+              {submitStatus && (
+                <div
+                  className={`mt-4 p-4 rounded-lg ${
+                    submitStatus.type === "success"
+                      ? "bg-green-500/10 border border-green-500/20 text-green-400"
+                      : "bg-red-500/10 border border-red-500/20 text-red-400"
+                  }`}
+                >
+                  {submitStatus.message}
+                </div>
+              )}
             </div>
 
             {/* Additional Help */}

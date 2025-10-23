@@ -37,7 +37,7 @@ export default function LandingPage() {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
-    company: "",
+    subject: "",
     message: "",
   });
   const { user, loading, signOut } = useAuth();
@@ -81,7 +81,7 @@ export default function LandingPage() {
         type: "success",
         message: "Thank you! Your message has been sent successfully.",
       });
-      setFormData({ name: "", email: "", company: "", message: "" });
+      setFormData({ name: "", email: "", subject: "", message: "" });
     } catch (error) {
       setSubmitStatus({
         type: "error",
@@ -587,14 +587,14 @@ export default function LandingPage() {
 
                   <div className="space-y-2">
                     <label className="block text-white font-medium">
-                      Institution/Company
+                      Subject
                     </label>
                     <input
                       type="text"
-                      name="company"
-                      value={formData.company}
+                      name="subject"
+                      value={formData.subject}
                       onChange={handleInputChange}
-                      placeholder="Your institution or company name"
+                      placeholder="Subject..."
                       className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500/50 transition-all duration-300"
                     />
                   </div>

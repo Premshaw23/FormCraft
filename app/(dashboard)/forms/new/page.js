@@ -52,14 +52,14 @@ export default function NewFormPage() {
         },
       };
 
-      console.log("Creating form for user:", user.uid);
+      // console.log("Creating form for user:", user.uid);
       const formId = await createForm(user.uid, newForm);
 
       if (!formId) {
         throw new Error("Failed to get form ID");
       }
 
-      console.log("Form created successfully with ID:", formId);
+      // console.log("Form created successfully with ID:", formId);
       toast.success("Form created successfully!");
 
       // Wait a bit longer for Firestore to propagate
@@ -206,7 +206,7 @@ export default function NewFormPage() {
           throw new Error("Invalid template selected");
       }
 
-      console.log("Creating form from template for user:", user.uid);
+      // console.log("Creating form from template for user:", user.uid);
       const formId = await createForm(user.uid, templateData);
 
       if (!formId) {

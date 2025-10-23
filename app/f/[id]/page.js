@@ -1,17 +1,25 @@
-// app/f/[id]/page.js - PREMIUM UI VERSION
+// app/f/[id]/page.js - WITH AUTO-SAVE DRAFT MODE
 "use client";
 
-import { use, useState, useEffect } from "react";
+import { use, useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { getFormById } from "@/lib/services/formService";
 import { submitResponse, canUserSubmit } from "@/lib/services/responseService";
+import {
+  saveDraft,
+  loadDraft,
+  deleteDraft,
+  throttle,
+} from "@/lib/services/draftService";
 import {
   Loader2,
   CheckCircle2,
   AlertCircle,
   Sparkles,
   ArrowRight,
+  Save,
+  RefreshCw,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import ProtectedRoute from "@/components/ProtectedRoute";
@@ -31,7 +39,17 @@ export default function FormFillPage({ params }) {
   const [canSubmit, setCanSubmit] = useState(true);
   const [accessMessage, setAccessMessage] = useState("");
 
-  // Load form data
+  // Draft-related state
+  const [draftLoaded, setDraftLoaded] = useState(false);
+  const [lastSaved, setLastSaved] = useState(null);
+  const [savingDraft, setSavingDraft] = useState(false);
+  const [showDraftPrompt, setShowDraftPrompt] = useState(false);
+  const [pendingDraft, setPendingDraft] = useState(null);
+
+  // Ref to track if data has changed
+  const hasUnsavedChanges = useRef(false);
+
+  // Load form data and check for existing draft
   useEffect(() => {
     const loadForm = async () => {
       try {
@@ -49,7 +67,7 @@ export default function FormFillPage({ params }) {
 
         setForm(formData);
 
-        // Initialize form data
+        // Initialize empty form data
         const initialData = {};
         formData.fields.forEach((field) => {
           if (field.type === "checkboxes") {
@@ -58,7 +76,19 @@ export default function FormFillPage({ params }) {
             initialData[field.id] = "";
           }
         });
-        setFormData(initialData);
+
+        // Check for existing draft
+        const draft = await loadDraft(formId, user?.uid);
+
+        if (draft.exists && draft.data.formData) {
+          // Show prompt to restore draft
+          setPendingDraft(draft.data.formData);
+          setShowDraftPrompt(true);
+          setFormData(initialData); // Set empty data initially
+        } else {
+          setFormData(initialData);
+          setDraftLoaded(true);
+        }
       } catch (error) {
         console.error("Error loading form:", error);
         toast.error("Failed to load form");
@@ -70,7 +100,73 @@ export default function FormFillPage({ params }) {
     if (formId && !authLoading) {
       loadForm();
     }
-  }, [formId, authLoading]);
+  }, [formId, authLoading, user]);
+
+  // Handle draft restoration
+  const handleRestoreDraft = () => {
+    if (pendingDraft) {
+      setFormData(pendingDraft);
+      setShowDraftPrompt(false);
+      setDraftLoaded(true);
+      toast.success("Draft restored successfully! 📝");
+    }
+  };
+
+  const handleStartFresh = () => {
+    setShowDraftPrompt(false);
+    setDraftLoaded(true);
+    // Delete the draft
+    deleteDraft(formId, user?.uid);
+  };
+
+  // Throttled auto-save function
+  const autoSaveDraft = useCallback(
+    throttle(async (data) => {
+      if (!draftLoaded || submitted) return;
+
+      // Check if there's any actual data
+      const hasData = Object.values(data).some((value) => {
+        if (Array.isArray(value)) return value.length > 0;
+        return value !== "" && value !== null && value !== undefined;
+      });
+
+      if (!hasData) return;
+
+      setSavingDraft(true);
+      const result = await saveDraft(formId, user?.uid, data, {
+        formTitle: form?.title,
+        userName: user?.displayName || "Anonymous",
+      });
+
+      if (result.success) {
+        setLastSaved(new Date());
+        hasUnsavedChanges.current = false;
+      }
+      setSavingDraft(false);
+    }, 2000), // Save every 2 seconds max
+    [formId, user, form, draftLoaded, submitted]
+  );
+
+  // Auto-save when form data changes
+  useEffect(() => {
+    if (draftLoaded && !submitted) {
+      hasUnsavedChanges.current = true;
+      autoSaveDraft(formData);
+    }
+  }, [formData, autoSaveDraft, draftLoaded, submitted]);
+
+  // Warn before leaving if there are unsaved changes
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (hasUnsavedChanges.current && !submitted) {
+        e.preventDefault();
+        e.returnValue = "";
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [submitted]);
 
   // Check access permissions
   useEffect(() => {
@@ -214,19 +310,18 @@ export default function FormFillPage({ params }) {
     });
 
     setErrors(newErrors);
-    // If there are errors, set focus/scroll to the first error field immediately
     const errorKeys = Object.keys(newErrors);
     if (errorKeys.length > 0) {
       const firstErrorField = errorKeys[0];
-      // small timeout to ensure DOM updated
       setTimeout(() => {
         document.getElementById(`field-${firstErrorField}`)?.scrollIntoView({
           behavior: "smooth",
           block: "center",
         });
-        // attempt to focus the first interactive control inside the field
         const fieldEl = document.getElementById(`field-${firstErrorField}`);
-        const focusable = fieldEl?.querySelector('input, textarea, select, button');
+        const focusable = fieldEl?.querySelector(
+          "input, textarea, select, button"
+        );
         focusable?.focus();
       }, 50);
     }
@@ -245,7 +340,6 @@ export default function FormFillPage({ params }) {
     setSubmitting(true);
 
     try {
-      // Show upload progress toast for files
       const hasFiles = Object.values(formData).some((v) => v instanceof File);
 
       if (hasFiles) {
@@ -262,7 +356,6 @@ export default function FormFillPage({ params }) {
           formTitle: form.title,
         },
         (fieldId, progress) => {
-          // Update upload progress
           toast.loading(`Uploading: ${Math.round(progress)}%`, {
             id: "upload-progress",
           });
@@ -272,6 +365,10 @@ export default function FormFillPage({ params }) {
       if (hasFiles) {
         toast.success("Files uploaded!", { id: "upload-progress" });
       }
+
+      // Delete draft after successful submission
+      await deleteDraft(formId, user?.uid);
+      hasUnsavedChanges.current = false;
 
       setSubmitted(true);
       toast.success("Response submitted successfully! 🎉");
@@ -286,7 +383,19 @@ export default function FormFillPage({ params }) {
     }
   };
 
-  // Get theme colors with fallbacks
+  // Format last saved time
+  const getLastSavedText = () => {
+    if (!lastSaved) return "Not saved yet";
+
+    const now = new Date();
+    const diff = Math.floor((now - lastSaved) / 1000); // seconds
+
+    if (diff < 10) return "Saved just now";
+    if (diff < 60) return `Saved ${diff}s ago`;
+    if (diff < 3600) return `Saved ${Math.floor(diff / 60)}m ago`;
+    return `Saved ${Math.floor(diff / 3600)}h ago`;
+  };
+
   const primaryColor = form?.theme?.primaryColor || "#8b5cf6";
   const secondaryColor = form?.theme?.secondaryColor || "#ec4899";
   const backgroundColor = form?.theme?.backgroundColor || "#0f172a";
@@ -314,6 +423,55 @@ export default function FormFillPage({ params }) {
           <p className="text-lg font-medium" style={{ color: primaryColor }}>
             Loading your form...
           </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Draft Restoration Prompt
+  if (showDraftPrompt && pendingDraft) {
+    return (
+      <div
+        className="min-h-screen flex items-center justify-center p-4"
+        style={{
+          background: `linear-gradient(135deg, ${backgroundColor} 0%, ${primaryColor}15 100%)`,
+        }}
+      >
+        <div className="max-w-md w-full bg-white/10 backdrop-blur-2xl border border-white/20 rounded-3xl p-8 shadow-2xl">
+          <div
+            className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6"
+            style={{
+              background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor})`,
+            }}
+          >
+            <RefreshCw className="w-10 h-10 text-white" />
+          </div>
+
+          <h2 className="text-2xl font-bold text-white text-center mb-3">
+            Draft Found!
+          </h2>
+          <p className="text-slate-300 text-center mb-8">
+            We found a saved draft of your previous response. Would you like to
+            continue where you left off?
+          </p>
+
+          <div className="space-y-3">
+            <button
+              onClick={handleRestoreDraft}
+              className="w-full py-4 px-6 rounded-xl text-white font-semibold transition-all hover:scale-105 shadow-lg"
+              style={{
+                background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor})`,
+              }}
+            >
+              Continue with Draft
+            </button>
+            <button
+              onClick={handleStartFresh}
+              className="w-full py-4 px-6 rounded-xl text-white font-semibold transition-all hover:bg-white/10 border border-white/20"
+            >
+              Start Fresh
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -430,6 +588,7 @@ export default function FormFillPage({ params }) {
                   }
                 });
                 setFormData(initialData);
+                setDraftLoaded(true);
               }}
               className="group px-8 py-4 text-white rounded-xl font-semibold transition-all shadow-lg hover:shadow-2xl hover:scale-105 inline-flex items-center gap-3"
               style={{
@@ -447,168 +606,195 @@ export default function FormFillPage({ params }) {
 
   return (
     <ProtectedRoute>
-
-    <div
-      className="min-h-screen py-8 sm:py-16 px-4"
-      style={{
-        background: `linear-gradient(135deg, ${backgroundColor} 0%, ${primaryColor}10 50%, ${secondaryColor}10 100%)`,
-        fontFamily: form.theme?.fontFamily || "Inter, system-ui, sans-serif",
-      }}
-    >
-      {/* Animated background elements */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div
-          className="absolute top-1/4 -left-20 w-96 h-96 rounded-full blur-3xl opacity-20 animate-pulse"
-          style={{ background: primaryColor }}
-        />
-        <div
-          className="absolute bottom-1/4 -right-20 w-96 h-96 rounded-full blur-3xl opacity-20 animate-pulse"
-          style={{ background: secondaryColor, animationDelay: "1s" }}
-        />
-      </div>
-
-      <div className="max-w-4xl mx-auto relative">
-        <form
-          onSubmit={handleSubmit}
-          className="bg-white/10 backdrop-blur-2xl rounded-3xl shadow-2xl overflow-hidden border border-white/20"
-        >
-          {/* Premium Header */}
+      <div
+        className="min-h-screen py-8 sm:py-16 px-4"
+        style={{
+          background: `linear-gradient(135deg, ${backgroundColor} 0%, ${primaryColor}10 50%, ${secondaryColor}10 100%)`,
+          fontFamily: form.theme?.fontFamily || "Inter, system-ui, sans-serif",
+        }}
+      >
+        {/* Animated background elements */}
+        <div className="fixed inset-0 overflow-hidden pointer-events-none">
           <div
-            className="relative p-8 sm:p-12 overflow-hidden"
-            style={{
-              background: `linear-gradient(135deg, ${primaryColor}15, ${secondaryColor}15)`,
-              borderBottom: `1px solid ${primaryColor}30`,
-            }}
-          >
-            {/* Decorative elements */}
-            <div
-              className="absolute top-0 right-0 w-40 h-40 rounded-full blur-3xl opacity-30"
-              style={{ background: primaryColor }}
-            />
-            <div
-              className="absolute bottom-0 left-0 w-32 h-32 rounded-full blur-2xl opacity-20"
-              style={{ background: secondaryColor }}
-            />
+            className="absolute top-1/4 -left-20 w-96 h-96 rounded-full blur-3xl opacity-20 animate-pulse"
+            style={{ background: primaryColor }}
+          />
+          <div
+            className="absolute bottom-1/4 -right-20 w-96 h-96 rounded-full blur-3xl opacity-20 animate-pulse"
+            style={{ background: secondaryColor, animationDelay: "1s" }}
+          />
+        </div>
 
-            <div className="relative z-10">
-              <div className="flex items-start gap-4 mb-6">
-                <div
-                  className="w-3 h-20 rounded-full"
-                  style={{
-                    background: `linear-gradient(180deg, ${primaryColor}, ${secondaryColor})`,
-                  }}
-                />
-                <div className="flex-1">
-                  <h1
-                    className="text-4xl sm:text-5xl font-black mb-3 leading-tight"
-                    style={{
-                      background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor})`,
-                      WebkitBackgroundClip: "text",
-                      WebkitTextFillColor: "transparent",
-                      backgroundClip: "text",
-                    }}
-                  >
-                    {form.title}
-                  </h1>
-                  {form.description && (
-                    <p className="text-slate-200 text-lg leading-relaxed max-w-2xl">
-                      {form.description}
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              {form.settings?.requireAuth && user && (
-                <div
-                  className="inline-flex items-center gap-3 px-5 py-3 rounded-full backdrop-blur-xl border"
-                  style={{
-                    background: `${primaryColor}15`,
-                    borderColor: `${primaryColor}30`,
-                  }}
-                >
-                  <div
-                    className="w-2 h-2 rounded-full animate-pulse"
-                    style={{ background: primaryColor }}
-                    />
-                  <span className="text-sm text-slate-200">
-                    Responding as{" "}
-                    <strong
-                      className="font-semibold"
-                      style={{ color: primaryColor }}
-                      >
-                      {user.email}
-                    </strong>
-                  </span>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Form Fields */}
-          <div className="p-6 sm:p-12 space-y-8">
-            {form.fields.map((field, index) => (
+        <div className="max-w-4xl mx-auto relative">
+          {/* Auto-save indicator */}
+          {draftLoaded && !submitted && (
+            <div className="mb-4 flex items-center justify-end gap-2 text-sm">
               <div
-                key={field.id}
-                id={`field-${field.id}`}
-                className="transform transition-all duration-300 hover:scale-[1.01]"
-                style={{ animationDelay: `${index * 50}ms` }}
+                className="flex items-center gap-2 px-4 py-2 rounded-full backdrop-blur-xl border"
+                style={{
+                  background: `${primaryColor}10`,
+                  borderColor: `${primaryColor}30`,
+                }}
               >
-                <FormField
-                  field={field}
-                  value={formData[field.id]}
-                  error={errors[field.id]}
-                  onChange={(value) => handleFieldChange(field.id, value)}
-                  onCheckboxChange={(option, checked) =>
-                    handleCheckboxChange(field.id, option, checked)
-                  }
-                  primaryColor={primaryColor}
-                  secondaryColor={secondaryColor}
-                  />
-              </div>
-            ))}
-
-            {/* Premium Submit Button */}
-            <button
-              type="submit"
-              disabled={submitting}
-              className="group w-full py-5 px-8 rounded-2xl text-white font-bold text-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 shadow-2xl hover:shadow-3xl relative overflow-hidden"
-              style={{
-                background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor})`,
-              }}
-            >
-              <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
-              <span className="relative z-10 flex items-center gap-3">
-                {submitting ? (
+                {savingDraft ? (
                   <>
-                    <Loader2 className="w-6 h-6 animate-spin" />
-                    Submitting...
+                    <Loader2
+                      className="w-4 h-4 animate-spin"
+                      style={{ color: primaryColor }}
+                    />
+                    <span className="text-slate-300">Saving...</span>
                   </>
                 ) : (
                   <>
-                    {form.settings?.submitButtonText || "Submit Response"}
-                    <ArrowRight className="w-6 h-6 group-hover:translate-x-2 transition-transform" />
+                    <Save className="w-4 h-4" style={{ color: primaryColor }} />
+                    <span className="text-slate-300">{getLastSavedText()}</span>
                   </>
                 )}
-              </span>
-            </button>
-          </div>
-        </form>
+              </div>
+            </div>
+          )}
 
-        {/* Footer Badge */}
-        <div className="text-center mt-8">
-          <p className="text-slate-400 text-sm">
-            Powered by{" "}
-            <span className="font-semibold" style={{ color: primaryColor }}>
-              FormCraft
-            </span>
-          </p>
+          <form
+            onSubmit={handleSubmit}
+            className="bg-white/10 backdrop-blur-2xl rounded-3xl shadow-2xl overflow-hidden border border-white/20"
+          >
+            {/* Premium Header - Same as before */}
+            <div
+              className="relative p-8 sm:p-12 overflow-hidden"
+              style={{
+                background: `linear-gradient(135deg, ${primaryColor}15, ${secondaryColor}15)`,
+                borderBottom: `1px solid ${primaryColor}30`,
+              }}
+            >
+              <div
+                className="absolute top-0 right-0 w-40 h-40 rounded-full blur-3xl opacity-30"
+                style={{ background: primaryColor }}
+              />
+              <div
+                className="absolute bottom-0 left-0 w-32 h-32 rounded-full blur-2xl opacity-20"
+                style={{ background: secondaryColor }}
+              />
+
+              <div className="relative z-10">
+                <div className="flex items-start gap-4 mb-6">
+                  <div
+                    className="w-3 h-20 rounded-full"
+                    style={{
+                      background: `linear-gradient(180deg, ${primaryColor}, ${secondaryColor})`,
+                    }}
+                  />
+                  <div className="flex-1">
+                    <h1
+                      className="text-4xl sm:text-5xl font-black mb-3 leading-tight"
+                      style={{
+                        background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor})`,
+                        WebkitBackgroundClip: "text",
+                        WebkitTextFillColor: "transparent",
+                        backgroundClip: "text",
+                      }}
+                    >
+                      {form.title}
+                    </h1>
+                    {form.description && (
+                      <p className="text-slate-200 text-lg leading-relaxed max-w-2xl">
+                        {form.description}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {form.settings?.requireAuth && user && (
+                  <div
+                    className="inline-flex items-center gap-3 px-5 py-3 rounded-full backdrop-blur-xl border"
+                    style={{
+                      background: `${primaryColor}15`,
+                      borderColor: `${primaryColor}30`,
+                    }}
+                  >
+                    <div
+                      className="w-2 h-2 rounded-full animate-pulse"
+                      style={{ background: primaryColor }}
+                    />
+                    <span className="text-sm text-slate-200">
+                      Responding as{" "}
+                      <strong
+                        className="font-semibold"
+                        style={{ color: primaryColor }}
+                      >
+                        {user.email}
+                      </strong>
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Form Fields */}
+            <div className="p-6 sm:p-12 space-y-8">
+              {form.fields.map((field, index) => (
+                <div
+                  key={field.id}
+                  id={`field-${field.id}`}
+                  className="transform transition-all duration-300 hover:scale-[1.01]"
+                  style={{ animationDelay: `${index * 50}ms` }}
+                >
+                  <FormField
+                    field={field}
+                    value={formData[field.id]}
+                    error={errors[field.id]}
+                    onChange={(value) => handleFieldChange(field.id, value)}
+                    onCheckboxChange={(option, checked) =>
+                      handleCheckboxChange(field.id, option, checked)
+                    }
+                    primaryColor={primaryColor}
+                    secondaryColor={secondaryColor}
+                  />
+                </div>
+              ))}
+
+              {/* Premium Submit Button */}
+              <button
+                type="submit"
+                disabled={submitting}
+                className="group w-full py-5 px-8 rounded-2xl text-white font-bold text-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 shadow-2xl hover:shadow-3xl relative overflow-hidden"
+                style={{
+                  background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor})`,
+                }}
+              >
+                <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
+                <span className="relative z-10 flex items-center gap-3">
+                  {submitting ? (
+                    <>
+                      <Loader2 className="w-6 h-6 animate-spin" />
+                      Submitting...
+                    </>
+                  ) : (
+                    <>
+                      {form.settings?.submitButtonText || "Submit Response"}
+                      <ArrowRight className="w-6 h-6 group-hover:translate-x-2 transition-transform" />
+                    </>
+                  )}
+                </span>
+              </button>
+            </div>
+          </form>
+
+          {/* Footer Badge */}
+          <div className="text-center mt-8">
+            <p className="text-slate-400 text-sm">
+              Powered by{" "}
+              <span className="font-semibold" style={{ color: primaryColor }}>
+                FormCraft
+              </span>
+            </p>
+          </div>
         </div>
       </div>
-    </div>
-</ProtectedRoute>
+    </ProtectedRoute>
   );
 }
 
+// FormField component - Same as before
 function FormField({
   field,
   value,
@@ -621,38 +807,38 @@ function FormField({
   if (field.type === "section_heading") {
     return (
       <div className="pt-6 pb-4">
-      <div className="flex items-center gap-4 mb-3">
-      <div
-      className="w-1 h-12 rounded-full"
-      style={{
+        <div className="flex items-center gap-4 mb-3">
+          <div
+            className="w-1 h-12 rounded-full"
+            style={{
               background: `linear-gradient(180deg, ${primaryColor}, ${secondaryColor})`,
             }}
-            />
-            <h3 className="text-3xl font-bold text-white">
+          />
+          <h3 className="text-3xl font-bold text-white">
             {field.text || "Section Heading"}
-            </h3>
-            </div>
-            {field.description && (
-              <p
-              className="text-slate-300 text-lg ml-5 pl-4 border-l-2"
-              style={{ borderColor: `${primaryColor}40` }}
+          </h3>
+        </div>
+        {field.description && (
+          <p
+            className="text-slate-300 text-lg ml-5 pl-4 border-l-2"
+            style={{ borderColor: `${primaryColor}40` }}
           >
             {field.description}
-            </p>
-          )}
+          </p>
+        )}
       </div>
     );
   }
-  
+
   if (field.type === "divider") {
     return (
       <div className="relative py-6">
-      <div
-      className="h-px w-full"
-      style={{
-        background: `linear-gradient(90deg, transparent, ${primaryColor}60, transparent)`,
-      }}
-      />
+        <div
+          className="h-px w-full"
+          style={{
+            background: `linear-gradient(90deg, transparent, ${primaryColor}60, transparent)`,
+          }}
+        />
       </div>
     );
   }
@@ -686,7 +872,7 @@ function FormField({
         {field.required && (
           <span
             className="text-sm px-2 py-0.5 rounded-full font-medium"
-            style={{ background: `${primaryColor}/30`, color: primaryColor }}
+            style={{ background: `${primaryColor}30`, color: primaryColor }}
           >
             Required
           </span>
